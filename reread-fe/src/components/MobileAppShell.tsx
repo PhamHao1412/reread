@@ -29,12 +29,12 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
   ];
 
   return (
-    <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden shadow-2xl border-x border-[var(--app-border)] select-none">
+    <div className="h-full w-full max-w-[440px] mx-auto bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden select-none">
       {/* Top Header Bar (Safe Area Aware) */}
       {showHeader && (
         <header
-          className="flex items-center justify-between px-5 pb-3 bg-[var(--app-surface)]/95 backdrop-blur-md border-b border-[var(--app-border)] z-20 shrink-0"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+          className="flex items-center justify-between px-5 pb-2.5 bg-[var(--app-surface)]/95 backdrop-blur-md border-b border-[var(--app-border)] z-20 shrink-0"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
         >
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-black tracking-tight text-[var(--app-accent)]">
@@ -63,22 +63,17 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
       )}
 
       {/* Main Viewport Content */}
-      <main
-        className="flex-1 overflow-y-auto no-scrollbar relative"
-        style={{
-          paddingBottom: showNav ? 'calc(env(safe-area-inset-bottom, 0px) + 72px)' : '0px',
-        }}
-      >
+      <main className="flex-1 overflow-y-auto no-scrollbar relative">
         {children}
       </main>
 
-      {/* Fixed Bottom Navigation Bar (Safe Area Aware) */}
+      {/* Fixed Compact Bottom Navigation Bar (Sits right at bottom edge) */}
       {showNav && (
         <nav
-          className="absolute bottom-0 left-0 right-0 z-30 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 pt-2 shadow-lg"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+          className="shrink-0 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-3 pt-1.5 z-20 shadow-lg"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
         >
-          <div className="flex justify-between items-center max-w-md mx-auto">
+          <div className="flex justify-around items-center max-w-md mx-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
@@ -87,26 +82,26 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className="flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-150 relative active:scale-95"
+                  className="flex flex-col items-center justify-center flex-1 py-0.5 text-center transition-all duration-150 relative active:scale-95"
                 >
                   <div
                     className={`p-1 rounded-xl transition-all ${
                       isActive
-                        ? 'text-[var(--app-accent)] scale-110'
+                        ? 'text-[var(--app-accent)] scale-105'
                         : 'text-[var(--app-muted)] hover:text-[var(--app-text)]'
                     }`}
                   >
-                    <Icon className="h-5.5 w-5.5" />
+                    <Icon className="h-5 w-5" />
                   </div>
                   <span
-                    className={`text-[11px] font-bold transition-all mt-0.5 ${
+                    className={`text-[10px] font-bold transition-all ${
                       isActive ? 'text-[var(--app-accent)]' : 'text-[var(--app-muted)]'
                     }`}
                   >
                     {item.label}
                   </span>
                   {isActive && (
-                    <div className="absolute bottom-0 h-1 w-1 rounded-full bg-orange-warm" />
+                    <div className="h-1 w-1 rounded-full bg-orange-warm mt-0.5" />
                   )}
                 </button>
               );

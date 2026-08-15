@@ -16,7 +16,7 @@ export function App() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col items-center justify-center p-6 space-y-4">
+      <div className="h-full w-full max-w-[440px] mx-auto bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col items-center justify-center p-6 space-y-4 select-none">
         <div className="h-16 w-16 rounded-3xl bg-[var(--app-surface)] border border-[var(--app-border)] flex items-center justify-center animate-pulse shadow-xl text-[var(--app-accent)]">
           <BookOpen className="h-8 w-8" />
         </div>
@@ -34,7 +34,7 @@ export function App() {
   // Active Reading Workspace
   if (activeBook) {
     return (
-      <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden shadow-2xl border-x border-[var(--app-border)] select-none">
+      <div className="h-full w-full max-w-[440px] mx-auto bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden select-none">
         <ReaderScreen
           book={activeBook}
           onBack={() => setActiveBook(null)}
@@ -48,17 +48,15 @@ export function App() {
   };
 
   return (
-    <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden shadow-2xl border-x border-[var(--app-border)] select-none">
-      <MobileAppShell currentTab={currentTab} onTabChange={setCurrentTab}>
-        {currentTab === 'library' && (
-          <LibraryScreen onSelectBook={(book) => setActiveBook(book)} />
-        )}
-        {currentTab === 'bookmarks' && (
-          <BookmarksScreen onOpenBookAtPage={handleOpenBookAtPage} />
-        )}
-        {currentTab === 'settings' && <SettingsScreen />}
-      </MobileAppShell>
-    </div>
+    <MobileAppShell currentTab={currentTab} onTabChange={setCurrentTab}>
+      {currentTab === 'library' && (
+        <LibraryScreen onSelectBook={(book) => setActiveBook(book)} />
+      )}
+      {currentTab === 'bookmarks' && (
+        <BookmarksScreen onOpenBookAtPage={handleOpenBookAtPage} />
+      )}
+      {currentTab === 'settings' && <SettingsScreen />}
+    </MobileAppShell>
   );
 }
 

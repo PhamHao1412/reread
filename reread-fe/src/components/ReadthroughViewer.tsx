@@ -30,12 +30,11 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
   const [showInlineImage, setShowInlineImage] = useState<boolean>(false);
   const [showFullImageModal, setShowFullImageModal] = useState<boolean>(false);
 
-  // Long Press & Touch tracking
+  // Touch tracking for mobile gesture vs tap separation
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
-  const longPressTimerRef = useRef<any>(null);
-  const isLongPressTriggeredRef = useRef<boolean>(false);
+  const isScrollingRef = useRef<boolean>(false);
 
   // Reset scroll and inline image when page changes
   useEffect(() => {
@@ -44,15 +43,6 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     }
     setShowInlineImage(false);
   }, [currentPage]);
-
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current);
-      }
-    };
-  }, []);
 
   // Detect if current page contains figures or architecture diagrams
   const hasFigureReference = useMemo(() => {
@@ -76,142 +66,124 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     }
   };
 
-  // Helper to extract clean word from element or coordinate
+  // Helper to extract clean single word from element or coordinate
   const extractWord = (target: HTMLElement | null, clientX: number, clientY: number): string | null => {
     const wordEl = target?.closest('.read-word, .bionic-word') as HTMLElement | null;
     if (wordEl) {
       const dataWord = wordEl.getAttribute('data-word');
-      if (dataWord) return sanitizeSingleWord(dataWord);
+      if (dataWord) {
+        const clean = sanitizeSingleWord(dataWord);
+        if (clean) return clean;
+      }
       const textVal = wordEl.innerText || wordEl.textContent || '';
-      return sanitizeSingleWord(textVal);
+      const clean = sanitizeSingleWord(textVal);
+      if (clean) return clean;
     }
     return getWordAtPoint(clientX, clientY);
   };
 
-  // 1. Desktop Double Click Handler (for Mac/PC)
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // 1. Mouse Click Handler (for Desktop / PC / Mac)
+  const handleClick = (e: React.MouseEvent) => {
+    // Avoid interfering with buttons or modals
+    const targetElement = e.target as HTMLElement | null;
+    if (targetElement?.closest('button, .cursor-pointer')) return;
 
-    const word = extractWord(e.target as HTMLElement, e.clientX, e.clientY);
-    window.getSelection()?.removeAllRanges();
-
+    const word = extractWord(targetElement, e.clientX, e.clientY);
     if (word) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.getSelection()?.removeAllRanges();
       onTranslateWord(word);
     }
   };
 
-  // 2. Mobile Touch & Long-Press (Nhấn giữ ~380ms)
+  // 2. Mobile Touch Event Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartX.current = touch.clientX;
     touchStartY.current = touch.clientY;
     touchStartTime.current = Date.now();
-    isLongPressTriggeredRef.current = false;
-
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-    }
-
-    const screenWidth = window.innerWidth || 360;
-    const xRatio = touch.clientX / screenWidth;
-
-    // Only initiate Long-Press if touch is in center reading zone (not on extreme navigation edges)
-    if (xRatio >= 0.18 && xRatio <= 0.82) {
-      const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
-      const word = extractWord(targetElement, touch.clientX, touch.clientY);
-
-      if (word) {
-        longPressTimerRef.current = setTimeout(() => {
-          isLongPressTriggeredRef.current = true;
-
-          // Trigger light haptic vibration on mobile
-          try {
-            if ('vibrate' in navigator) {
-              navigator.vibrate(40);
-            }
-          } catch {
-            // ignore
-          }
-
-          // Open translation sheet
-          onTranslateWord(word);
-        }, 380);
-      }
-    }
+    isScrollingRef.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    const moveX = Math.abs(touch.clientX - touchStartX.current);
-    const moveY = Math.abs(touch.clientY - touchStartY.current);
+    const diffX = Math.abs(touch.clientX - touchStartX.current);
+    const diffY = Math.abs(touch.clientY - touchStartY.current);
 
-    // If user moves finger > 5px (scrolling), cancel long-press immediately
-    if (moveX > 5 || moveY > 5) {
-      if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-      }
+    // If finger moves more than 8px, it is scrolling/swiping
+    if (diffX > 8 || diffY > 8) {
+      isScrollingRef.current = true;
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // If long press was triggered, prevent any other tap actions
-    if (isLongPressTriggeredRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-
-    // Cancel pending timer
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-
     const touch = e.changedTouches[0];
     const diffX = touch.clientX - touchStartX.current;
     const diffY = touch.clientY - touchStartY.current;
     const duration = Date.now() - touchStartTime.current;
 
-    // ── 1. Edge Tap Zones & Quick Tap Navigation ──
-    const isStationaryTap = Math.abs(diffX) < 14 && Math.abs(diffY) < 14 && duration < 320;
-    if (isStationaryTap) {
-      const screenWidth = window.innerWidth || 360;
-      const xRatio = touch.clientX / screenWidth;
-
-      // Tap on Left Edge (< 20%) -> Prev Page
-      if (xRatio < 0.20) {
-        if (currentPage > 1) {
+    // Case A: User was scrolling / swiping
+    if (isScrollingRef.current) {
+      // Horizontal swipe to flip pages
+      if (Math.abs(diffX) > 48 && Math.abs(diffY) < 70) {
+        if (diffX < 0 && currentPage < totalPages) {
+          onPageChange(currentPage + 1, totalPages);
+        } else if (diffX > 0 && currentPage > 1) {
           onPageChange(currentPage - 1, totalPages);
         }
-        return;
       }
-
-      // Tap on Right Edge (> 80%) -> Next Page
-      if (xRatio > 0.80) {
-        if (currentPage < totalPages) {
-          onPageChange(currentPage + 1, totalPages);
-        }
-        return;
-      }
-
-      // Center area tap -> Toggle menu controls
-      onTap();
+      // Vertical scroll: do nothing, let native scrolling finish
       return;
     }
 
-    // ── 2. Horizontal Swipe for page flipping ──
-    if (Math.abs(diffX) > 45 && Math.abs(diffY) < 80) {
-      if (diffX < 0 && currentPage < totalPages) {
-        onPageChange(currentPage + 1, totalPages);
-      } else if (diffX > 0 && currentPage > 1) {
-        onPageChange(currentPage - 1, totalPages);
+    // Case B: Clean stationary Tap (finger did not scroll, duration < 400ms)
+    if (duration < 400 && Math.abs(diffX) <= 8 && Math.abs(diffY) <= 8) {
+      const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
+
+      // Ignore taps on interactive buttons/icons
+      if (targetElement?.closest('button, .cursor-pointer')) return;
+
+      // Check if tap landed on a word
+      const word = extractWord(targetElement, touch.clientX, touch.clientY);
+      if (word) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.getSelection()?.removeAllRanges();
+
+        // Optional light haptic feedback
+        try {
+          if ('vibrate' in navigator) navigator.vibrate(30);
+        } catch {
+          // ignore
+        }
+
+        onTranslateWord(word);
+        return;
       }
+
+      // Tap landed on empty margins/whitespace
+      const screenWidth = window.innerWidth || 360;
+      const xRatio = touch.clientX / screenWidth;
+
+      if (xRatio < 0.15 && currentPage > 1) {
+        // Left margin tap -> Prev Page
+        onPageChange(currentPage - 1, totalPages);
+        return;
+      }
+
+      if (xRatio > 0.85 && currentPage < totalPages) {
+        // Right margin tap -> Next Page
+        onPageChange(currentPage + 1, totalPages);
+        return;
+      }
+
+      // Center whitespace tap -> Toggle menu bars
+      onTap();
     }
   };
 
-  // If page contains NO text (e.g. standard publisher blank verso page between chapters)
+  // If page contains NO text (e.g. blank verso chapter divider)
   if (!text || text.trim() === '') {
     return (
       <div
@@ -253,11 +225,11 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
   return (
     <div
       ref={containerRef}
-      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full h-full overflow-y-auto no-scrollbar px-6 py-6 select-none"
+      className="w-full h-full overflow-y-auto no-scrollbar px-6 py-6 select-none cursor-pointer"
       style={{
         fontSize: `${settings.fontSize}px`,
         lineHeight: settings.lineHeight,
