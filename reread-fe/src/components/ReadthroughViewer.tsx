@@ -104,11 +104,17 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     return getWordAtPoint(clientX, clientY);
   };
 
+  // Guard: returns true if the touch/click target is a UI control (not readable text)
+  const isInteractiveTarget = (el: HTMLElement | null): boolean => {
+    if (!el) return false;
+    return !!el.closest('button, a, [data-no-translate], .image-modal, input, select, [role="button"]');
+  };
+
   // 1. Single Click & Double Click Handlers (for Desktop / Mouse)
   const handleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Don't trigger if clicked on a button or inside modal
-    if (target.closest('button, .image-modal, input')) return;
+    // Don't trigger if clicked on a button or inside modal or non-text UI
+    if (target.closest('button, .image-modal, input, a, [data-no-translate], [role="button"]')) return;
 
     const word = extractWord(target, e.clientX, e.clientY);
     if (word) {
@@ -233,6 +239,12 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
 
       // Center area tap: Check if a word is tapped for 1-touch instant dictionary lookup
       const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
+
+      // Skip word translation if touch landed on a UI button/control
+      if (isInteractiveTarget(targetElement)) {
+        return;
+      }
+
       const word = extractWord(targetElement, touch.clientX, touch.clientY);
 
       if (word) {
@@ -310,7 +322,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
       }}
     >
       {/* Top Header Pill & Visual Diagram Toggle Button */}
-      <div className="flex items-center justify-center space-x-2 mb-6">
+      <div className="flex items-center justify-center space-x-2 mb-6" data-no-translate>
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] text-[11px] font-extrabold shadow-xs">
           <Zap className="h-3.5 w-3.5 fill-current" />
           <span>Chế độ Readthrough</span>
