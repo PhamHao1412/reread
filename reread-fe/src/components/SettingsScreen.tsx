@@ -1,18 +1,18 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useReader } from '../context/ReaderContext';
-import { BookOpen, Zap, LogOut } from 'lucide-react';
 import { ReaderTheme } from '../types';
+import { BookOpen, Zap, ShieldCheck } from 'lucide-react';
 
 export const SettingsScreen: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { settings, setTheme, setReadingMode } = useReader();
 
   const themes: { id: ReaderTheme; label: string; bg: string; text: string }[] = [
-    { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF' },
-    { id: 'sepia', label: 'Sepia', bg: '#F7EFE1', text: '#2D2013' },
-    { id: 'amoled', label: 'AMOLED', bg: '#000000', text: '#FFFFFF' },
+    { id: 'sepia', label: 'Sepia (Trang sách)', bg: '#F7EFE1', text: '#2D2013' },
     { id: 'light', label: 'Sáng', bg: '#F8FAFC', text: '#0F172A' },
+    { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF' },
+    { id: 'amoled', label: 'AMOLED Đen', bg: '#000000', text: '#FFFFFF' },
   ];
 
   return (
@@ -30,7 +30,7 @@ export const SettingsScreen: React.FC = () => {
       {user && (
         <div className="p-4 rounded-3xl bg-[var(--app-card)] border border-[var(--app-border)] shadow-sm">
           <div className="flex items-center space-x-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-purple-primary to-orange-warm flex items-center justify-center text-white font-black text-lg shadow-inner">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--app-accent)] flex items-center justify-center text-white font-black text-lg shadow-sm">
               {user.username.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden">
@@ -38,7 +38,7 @@ export const SettingsScreen: React.FC = () => {
                 <h3 className="text-sm font-extrabold text-[var(--app-text)] truncate">
                   {user.username}
                 </h3>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 font-bold">
                   Đã đồng bộ
                 </span>
               </div>
@@ -48,10 +48,10 @@ export const SettingsScreen: React.FC = () => {
         </div>
       )}
 
-      {/* Theme Settings */}
+      {/* Theme Selection */}
       <div className="space-y-3">
         <label className="block text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
-          Giao diện ứng dụng
+          Giao diện màu chủ đạo
         </label>
         <div className="grid grid-cols-2 gap-2.5">
           {themes.map((t) => {
@@ -66,7 +66,7 @@ export const SettingsScreen: React.FC = () => {
                 }`}
               >
                 <span className="text-xs font-bold">{t.label}</span>
-                {isSelected && <div className="h-2 w-2 rounded-full bg-purple-primary" />}
+                {isSelected && <div className="h-2 w-2 rounded-full bg-[var(--app-accent)]" />}
               </button>
             );
           })}
@@ -83,7 +83,7 @@ export const SettingsScreen: React.FC = () => {
             onClick={() => setReadingMode('standard')}
             className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
               settings.readingMode === 'standard'
-                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >
@@ -94,7 +94,7 @@ export const SettingsScreen: React.FC = () => {
             onClick={() => setReadingMode('readthrough')}
             className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
               settings.readingMode === 'readthrough'
-                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >
@@ -109,27 +109,19 @@ export const SettingsScreen: React.FC = () => {
         <label className="block text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
           Hệ thống & Cơ sở dữ liệu
         </label>
-        <div className="p-3.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2 text-xs">
-          <div className="flex justify-between items-center text-[var(--app-muted)]">
-            <span>Database</span>
-            <span className="text-[var(--app-text)] font-mono font-bold">readful (PostgreSQL)</span>
+        <div className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="text-[var(--app-muted)]">Phiên bản</span>
+            <span className="font-bold text-[var(--app-text)]">ReRead v1.0.0 (Mobile)</span>
           </div>
-          <div className="flex justify-between items-center text-[var(--app-muted)]">
-            <span>Nền tảng</span>
-            <span className="text-[var(--app-accent)] font-bold">Reread Mobile Companion</span>
+          <div className="flex justify-between items-center">
+            <span className="text-[var(--app-muted)]">Kết nối</span>
+            <span className="font-bold text-emerald-600 flex items-center space-x-1">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Đồng bộ Render Backend</span>
+            </span>
           </div>
         </div>
-      </div>
-
-      {/* Logout Button */}
-      <div className="pt-2 pb-8">
-        <button
-          onClick={logout}
-          className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm hover:bg-red-500/20 transition-all active:scale-98"
-        >
-          <LogOut className="h-4.5 w-4.5" />
-          <span>Đăng xuất tài khoản</span>
-        </button>
       </div>
     </div>
   );

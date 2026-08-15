@@ -180,7 +180,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
             title={settings.readingMode === 'standard' ? 'Bật chế độ Readthrough' : 'Xem PDF gốc'}
             className={`p-2 rounded-xl border transition-all ${
               settings.readingMode === 'readthrough'
-                ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >
@@ -221,7 +221,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       <div className="flex-1 w-full h-full relative overflow-hidden pt-12 pb-14">
         {loadingFile ? (
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
-            <Loader2 className="h-9 w-9 text-purple-light animate-spin" />
+            <Loader2 className="h-9 w-9 text-[var(--app-accent)] animate-spin" />
             <p className="text-sm font-bold text-[var(--app-text)]">Đang tải sách vào bộ nhớ di động...</p>
             <p className="text-xs text-[var(--app-muted)] max-w-[240px]">
               Đang kết nối để nạp dữ liệu cuốn sách
@@ -293,7 +293,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           </div>
           <div className="w-full h-1 bg-[var(--app-surface)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-primary to-orange-warm rounded-full"
+              className="h-full bg-[var(--app-accent)] rounded-full"
               style={{ width: `${Math.min(Math.round((currentPage / Math.max(totalPages, 1)) * 100), 100)}%` }}
             />
           </div>

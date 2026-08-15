@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Warm Sepia Leather & Book Background Gradient -->
+    <linearGradient id="sepiaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B2618" />
+      <stop offset="50%" stop-color="#2D1D12" />
+      <stop offset="100%" stop-color="#1F130A" />
+    </linearGradient>
+    
+    <!-- Warm Parchment Book Pages -->
+    <linearGradient id="pageParchment" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7" />
+      <stop offset="60%" stop-color="#F7EFE1" />
+      <stop offset="100%" stop-color="#E8DCBF" />
+    </linearGradient>
+
+    <!-- Warm Amber Gold Lightning Bolt -->
+    <linearGradient id="amberGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="50%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- iOS Squircle App Icon Background -->
+  <rect width="512" height="512" rx="115" fill="url(#sepiaBg)" stroke="#8C663D" stroke-width="4" stroke-opacity="0.3" />
+
+  <!-- Open Book Pages Left & Right -->
+  <g transform="translate(0, 10)">
+    <!-- Left Page -->
+    <path d="M 240 140 C 180 120, 100 130, 80 150 L 80 370 C 100 350, 180 340, 240 360 Z" 
+          fill="url(#pageParchment)" stroke="#D8C7A5" stroke-width="3" />
+    
+    <!-- Right Page -->
+    <path d="M 272 140 C 332 120, 412 130, 432 150 L 432 370 C 412 350, 332 340, 272 360 Z" 
+          fill="url(#pageParchment)" stroke="#D8C7A5" stroke-width="3" />
+
+    <!-- Center Spine Line -->
+    <path d="M 256 140 L 256 365" stroke="#C07A28" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Speed Reading Lightning Bolt / Energy Glyph -->
+    <path d="M 275 90 L 210 245 L 265 245 L 235 410 L 320 225 L 265 225 Z" 
+          fill="url(#amberGold)" filter="url(#goldGlow)" stroke="#92400E" stroke-width="2.5" stroke-linejoin="round" />
+  </g>
+</svg>

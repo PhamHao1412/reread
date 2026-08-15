@@ -12,7 +12,7 @@ interface ReaderContextType {
 }
 
 const defaultSettings: ReaderSettings = {
-  theme: 'plum',
+  theme: 'sepia',
   fontSize: 16,
   lineHeight: 1.6,
   fontFamily: 'serif',
@@ -28,7 +28,12 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const saved = localStorage.getItem('reread_settings');
     if (saved) {
       try {
-        return { ...defaultSettings, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        // If user had old 'plum' saved as default, upgrade default to 'sepia' unless explicitly set
+        if (!parsed.theme || parsed.theme === 'plum') {
+          parsed.theme = 'sepia';
+        }
+        return { ...defaultSettings, ...parsed };
       } catch {
         return defaultSettings;
       }
@@ -39,17 +44,17 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     localStorage.setItem('reread_settings', JSON.stringify(settings));
 
-    // Update document colors according to active theme
+    // Update document root colors according to active theme
     const themeRoot = document.documentElement;
     if (settings.theme === 'sepia') {
       themeRoot.style.setProperty('--app-bg', '#F7EFE1');
       themeRoot.style.setProperty('--app-surface', '#EDE2CE');
-      themeRoot.style.setProperty('--app-card', '#E1D3BA');
+      themeRoot.style.setProperty('--app-card', '#F2E7D5');
       themeRoot.style.setProperty('--app-text', '#2D2013');
       themeRoot.style.setProperty('--app-text-secondary', '#523F2C');
       themeRoot.style.setProperty('--app-muted', '#7E6851');
-      themeRoot.style.setProperty('--app-border', 'rgba(126, 104, 81, 0.25)');
-      themeRoot.style.setProperty('--app-accent', '#C27803');
+      themeRoot.style.setProperty('--app-border', '#D8C7A5');
+      themeRoot.style.setProperty('--app-accent', '#C07A28');
     } else if (settings.theme === 'light') {
       themeRoot.style.setProperty('--app-bg', '#F8FAFC');
       themeRoot.style.setProperty('--app-surface', '#FFFFFF');
@@ -58,7 +63,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       themeRoot.style.setProperty('--app-text-secondary', '#334155');
       themeRoot.style.setProperty('--app-muted', '#64748B');
       themeRoot.style.setProperty('--app-border', 'rgba(0, 0, 0, 0.12)');
-      themeRoot.style.setProperty('--app-accent', '#6366F1');
+      themeRoot.style.setProperty('--app-accent', '#C07A28');
     } else if (settings.theme === 'amoled') {
       themeRoot.style.setProperty('--app-bg', '#000000');
       themeRoot.style.setProperty('--app-surface', '#121212');
@@ -67,9 +72,9 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       themeRoot.style.setProperty('--app-text-secondary', '#CCCCCC');
       themeRoot.style.setProperty('--app-muted', '#777777');
       themeRoot.style.setProperty('--app-border', 'rgba(255, 255, 255, 0.15)');
-      themeRoot.style.setProperty('--app-accent', '#3B82F6');
+      themeRoot.style.setProperty('--app-accent', '#D97706');
     } else {
-      // Default Plum Dark theme
+      // Plum Dark theme
       themeRoot.style.setProperty('--app-bg', '#1A0D1C');
       themeRoot.style.setProperty('--app-surface', '#261329');
       themeRoot.style.setProperty('--app-card', '#351B3A');
@@ -77,7 +82,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       themeRoot.style.setProperty('--app-text-secondary', '#D6C5DB');
       themeRoot.style.setProperty('--app-muted', '#9A84A1');
       themeRoot.style.setProperty('--app-border', 'rgba(168, 47, 208, 0.2)');
-      themeRoot.style.setProperty('--app-accent', '#A82FD0');
+      themeRoot.style.setProperty('--app-accent', '#C07A28');
     }
   }, [settings]);
 
@@ -100,14 +105,14 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const increaseFontSize = () => {
     setSettings((prev) => ({
       ...prev,
-      fontSize: Math.min(prev.fontSize + 1, 28),
+      fontSize: Math.min(prev.fontSize + 2, 28),
     }));
   };
 
   const decreaseFontSize = () => {
     setSettings((prev) => ({
       ...prev,
-      fontSize: Math.max(prev.fontSize - 1, 12),
+      fontSize: Math.max(prev.fontSize - 2, 12),
     }));
   };
 
@@ -118,9 +123,9 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateSettings,
         setTheme,
         setReadingMode,
-        setFontFamily,
         increaseFontSize,
         decreaseFontSize,
+        setFontFamily,
       }}
     >
       {children}

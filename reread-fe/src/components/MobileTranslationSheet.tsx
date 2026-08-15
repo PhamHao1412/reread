@@ -185,7 +185,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 className={`w-full flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all active:scale-98 ${
                   saved
                     ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-purple-primary border-purple-primary text-white shadow-lg'
+                    : 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
                 }`}
               >
                 {saved ? (

@@ -34,11 +34,11 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
       {showHeader && (
         <header className="flex items-center justify-between px-5 py-3.5 bg-[var(--app-surface)]/90 backdrop-blur-md border-b border-[var(--app-border)] z-20 shrink-0">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-light to-orange-warm bg-clip-text text-transparent">
-              Reread
+            <span className="text-2xl font-black tracking-tight text-[var(--app-accent)]">
+              ReRead
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] font-black uppercase tracking-wider">
-              Reader
+              Mobile
             </span>
           </div>
 
