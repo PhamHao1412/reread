@@ -110,26 +110,23 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     return !!el.closest('button, a, [data-no-translate], .image-modal, input, select, [role="button"]');
   };
 
-  // 1. Single Click & Double Click Handlers (for Desktop / Mouse)
+  // 1. Mouse Click Handlers (Desktop)
+  // Single click -> just toggle controls (no translation; use double-click or long-press on mobile)
   const handleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Don't trigger if clicked on a button or inside modal or non-text UI
     if (target.closest('button, .image-modal, input, a, [data-no-translate], [role="button"]')) return;
-
-    const word = extractWord(target, e.clientX, e.clientY);
-    if (word) {
-      e.preventDefault();
-      e.stopPropagation();
-      window.getSelection()?.removeAllRanges();
-      onTranslateWord(word);
-    }
+    // No word translation on single click
   };
 
+  // Double click -> translate word (desktop equivalent of mobile long-press)
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const word = extractWord(e.target as HTMLElement, e.clientX, e.clientY);
+    const target = e.target as HTMLElement;
+    if (target.closest('button, .image-modal, input, a, [data-no-translate], [role="button"]')) return;
+
+    const word = extractWord(target, e.clientX, e.clientY);
     window.getSelection()?.removeAllRanges();
 
     if (word) {
@@ -153,7 +150,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     const xRatio = touch.clientX / screenWidth;
 
     // Only initiate Long-Press if touch is in center reading zone (not on extreme navigation edges)
-    if (xRatio >= 0.18 && xRatio <= 0.82) {
+    if (xRatio >= 0.08 && xRatio <= 0.92) {
       const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
       const word = extractWord(targetElement, touch.clientX, touch.clientY);
 
@@ -215,50 +212,39 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     const diffY = touch.clientY - touchStartY.current;
     const duration = Date.now() - touchStartTime.current;
 
-    // ── 1. Edge Tap Zones & 1-Tap Word Translation ──
+    // ── 1. Edge Tap Zones & Toggle Controls ──
     const isStationaryTap = Math.abs(diffX) < 14 && Math.abs(diffY) < 14 && duration < 380;
     if (isStationaryTap) {
       const screenWidth = window.innerWidth || 360;
       const xRatio = touch.clientX / screenWidth;
 
-      // Tap on Left Edge (< 18%) -> Prev Page
-      if (xRatio < 0.18) {
+      // Tap on Left Edge (< 8%) -> Prev Page (disabled when image modal is open)
+      if (xRatio < 0.08 && !showFullImageModal) {
         if (currentPage > 1) {
           onPageChange(currentPage - 1, totalPages);
         }
         return;
       }
 
-      // Tap on Right Edge (> 82%) -> Next Page
-      if (xRatio > 0.82) {
+      // Tap on Right Edge (> 92%) -> Next Page (disabled when image modal is open)
+      if (xRatio > 0.92 && !showFullImageModal) {
         if (currentPage < totalPages) {
           onPageChange(currentPage + 1, totalPages);
         }
         return;
       }
 
-      // Center area tap: Check if a word is tapped for 1-touch instant dictionary lookup
+      // Center tap -> toggle menu controls only (translation requires long press ≥ 380ms)
       const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
-
-      // Skip word translation if touch landed on a UI button/control
-      if (isInteractiveTarget(targetElement)) {
-        return;
+      if (!isInteractiveTarget(targetElement)) {
+        onTap();
       }
-
-      const word = extractWord(targetElement, touch.clientX, touch.clientY);
-
-      if (word) {
-        onTranslateWord(word);
-        return;
-      }
-
-      // If tapped on empty space / margin -> Toggle menu controls
-      onTap();
       return;
     }
 
-    // ── 2. Horizontal Swipe for page flipping ──
-    if (Math.abs(diffX) > 45 && Math.abs(diffY) < 80) {
+
+    // ── 2. Horizontal Swipe for page flipping (disabled when image modal is open) ──
+    if (!showFullImageModal && Math.abs(diffX) > 45 && Math.abs(diffY) < 80) {
       if (diffX < 0 && currentPage < totalPages) {
         onPageChange(currentPage + 1, totalPages);
       } else if (diffX > 0 && currentPage > 1) {
