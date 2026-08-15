@@ -37,26 +37,36 @@
   --app-accent: #C07A28;
 }
 
-/* Safe area insets for mobile edge-to-edge layout */
-:root {
-  --sat: env(safe-area-inset-top, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-  --sal: env(safe-area-inset-left, 0px);
-  --sar: env(safe-area-inset-right, 0px);
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent !important;
+  box-sizing: border-box;
 }
 
-body {
-  background-color: var(--app-bg);
-  color: var(--app-text);
-  font-family: var(--font-sans-book);
+html, body {
+  height: 100%;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--font-sans-book);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+}
+
+#root {
+  height: 100%;
+  height: 100dvh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--app-bg);
 }
 
 /* Custom scrollbar utility */
@@ -68,26 +78,36 @@ body {
   scrollbar-width: none;
 }
 
-/* Reader Typography Styles */
-.readable-content p {
-  margin-bottom: 1.25em;
-  text-align: justify;
-  text-justify: inter-word;
+/* Reader Typography Styles (Natural Left-Aligned Flow) */
+.readable-content {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
+.readable-content p {
+  margin-bottom: 1.2em;
+  text-align: left !important;
+  text-justify: auto !important;
+  word-spacing: normal !important;
+  letter-spacing: normal !important;
+}
+
+/* Clean word wrapper for touch detection */
 .readable-content .read-word,
 .readable-content .bionic-word {
   display: inline;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.15s ease, color 0.15s ease;
   font-weight: 400 !important;
+  background-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
-.readable-content .read-word:hover {
-  background-color: rgba(192, 122, 40, 0.18);
-}
-
-.readable-content .read-word:active {
-  background-color: rgba(192, 122, 40, 0.35);
+/* Only highlight on mouse hover on desktop devices */
+@media (hover: hover) and (pointer: fine) {
+  .readable-content .read-word:hover {
+    background-color: rgba(192, 122, 40, 0.15) !important;
+    border-radius: 3px;
+  }
 }

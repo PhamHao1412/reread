@@ -146,8 +146,8 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     const moveX = Math.abs(touch.clientX - touchStartX.current);
     const moveY = Math.abs(touch.clientY - touchStartY.current);
 
-    // If user moves finger > 10px (scrolling), cancel long-press immediately
-    if (moveX > 10 || moveY > 10) {
+    // If user moves finger > 5px (scrolling), cancel long-press immediately
+    if (moveX > 5 || moveY > 5) {
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
@@ -262,6 +262,8 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
         fontSize: `${settings.fontSize}px`,
         lineHeight: settings.lineHeight,
         WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
       }}
     >
       {/* Top Header Pill & Visual Diagram Toggle Button */}
@@ -326,9 +328,9 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
         </div>
       )}
 
-      {/* Main Content (Uniform normal font weight, high contrast) */}
+      {/* Main Content (Uniform normal font weight, natural left alignment) */}
       <div
-        className={`readable-content text-[var(--app-text)] ${getFontFamilyClass()} tracking-normal text-left max-w-full font-normal pb-14`}
+        className={`readable-content text-[var(--app-text)] ${getFontFamilyClass()} tracking-normal text-left max-w-full font-normal pb-14 select-none`}
         dangerouslySetInnerHTML={{ __html: formattedHtml }}
       />
 

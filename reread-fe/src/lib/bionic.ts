@@ -34,12 +34,12 @@ export function convertToReadableText(text: string): string {
       const isCodeLine = trimmed.startsWith('$') || trimmed.startsWith('kubectl ') || trimmed.startsWith('docker ');
 
       if (isCodeLine) {
-        const words = trimmed.split(' ');
+        const words = trimmed.split(/\s+/);
         const wrappedWords = words.map((w) => formatWordElement(w));
-        return `<div class="p-3 my-3 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] font-mono text-[13px] text-orange-warm/90 overflow-x-auto select-text whitespace-pre-wrap">${wrappedWords.join(' ')}</div>`;
+        return `<div class="p-3 my-3 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] font-mono text-[13px] text-orange-warm/90 overflow-x-auto select-none whitespace-pre-wrap">${wrappedWords.join(' ')}</div>`;
       }
 
-      const words = trimmed.split(' ');
+      const words = trimmed.split(/\s+/);
       const wrappedWords = words.map((w) => formatWordElement(w));
       return `<p class="mb-4 leading-relaxed text-left tracking-normal text-[var(--app-text)] font-normal">${wrappedWords.join(' ')}</p>`;
     })

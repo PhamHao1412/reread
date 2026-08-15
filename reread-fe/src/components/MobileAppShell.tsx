@@ -1,38 +1,41 @@
 import React from 'react';
-import { BookOpen, Bookmark as BookmarkIcon, Settings, Compass, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { BookOpen, Compass, Bookmark, Settings, LogOut } from 'lucide-react';
 
 export type TabType = 'library' | 'reading' | 'bookmarks' | 'settings';
 
 interface MobileAppShellProps {
+  children: React.ReactNode;
   currentTab: TabType;
   onTabChange: (tab: TabType) => void;
-  children: React.ReactNode;
   showHeader?: boolean;
   showNav?: boolean;
 }
 
 export const MobileAppShell: React.FC<MobileAppShellProps> = ({
+  children,
   currentTab,
   onTabChange,
-  children,
   showHeader = true,
   showNav = true,
 }) => {
   const { user, logout } = useAuth();
 
-  const navItems: { id: TabType; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'library', label: 'Tủ sách', icon: BookOpen },
-    { id: 'reading', label: 'Đang đọc', icon: Compass },
-    { id: 'bookmarks', label: 'Đánh dấu', icon: BookmarkIcon },
-    { id: 'settings', label: 'Cài đặt', icon: Settings },
+  const navItems = [
+    { id: 'library' as TabType, label: 'Tủ sách', icon: BookOpen },
+    { id: 'reading' as TabType, label: 'Đang đọc', icon: Compass },
+    { id: 'bookmarks' as TabType, label: 'Đánh dấu', icon: Bookmark },
+    { id: 'settings' as TabType, label: 'Cài đặt', icon: Settings },
   ];
 
   return (
     <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden shadow-2xl border-x border-[var(--app-border)] select-none">
-      {/* Top Header Bar */}
+      {/* Top Header Bar (Safe Area Aware) */}
       {showHeader && (
-        <header className="flex items-center justify-between px-5 py-3.5 bg-[var(--app-surface)]/90 backdrop-blur-md border-b border-[var(--app-border)] z-20 shrink-0">
+        <header
+          className="flex items-center justify-between px-5 pb-3 bg-[var(--app-surface)]/95 backdrop-blur-md border-b border-[var(--app-border)] z-20 shrink-0"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        >
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-black tracking-tight text-[var(--app-accent)]">
               ReRead
@@ -60,13 +63,21 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
       )}
 
       {/* Main Viewport Content */}
-      <main className={`flex-1 overflow-y-auto no-scrollbar relative ${showNav ? 'pb-20' : ''}`}>
+      <main
+        className="flex-1 overflow-y-auto no-scrollbar relative"
+        style={{
+          paddingBottom: showNav ? 'calc(env(safe-area-inset-bottom, 0px) + 72px)' : '0px',
+        }}
+      >
         {children}
       </main>
 
-      {/* Fixed Bottom Navigation Bar */}
+      {/* Fixed Bottom Navigation Bar (Safe Area Aware) */}
       {showNav && (
-        <nav className="absolute bottom-0 left-0 right-0 z-30 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 py-2 shadow-lg">
+        <nav
+          className="absolute bottom-0 left-0 right-0 z-30 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 pt-2 shadow-lg"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+        >
           <div className="flex justify-between items-center max-w-md mx-auto">
             {navItems.map((item) => {
               const Icon = item.icon;

@@ -141,9 +141,10 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
     <div className="h-full w-full flex flex-col relative overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] select-none">
       {/* 1. Top Reader Navigation Bar (Floating/Collapsible) */}
       <div
-        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 py-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 pb-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
           showControls ? 'translate-y-0' : '-translate-y-full'
         }`}
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
       >
         <div className="flex items-center space-x-3 overflow-hidden">
           <button
@@ -218,7 +219,13 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       </div>
 
       {/* 2. Main Reader Viewport */}
-      <div className="flex-1 w-full h-full relative overflow-hidden pt-12 pb-14">
+      <div 
+        className="flex-1 w-full h-full relative overflow-hidden"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 54px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 58px)',
+        }}
+      >
         {loadingFile ? (
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
             <Loader2 className="h-9 w-9 text-[var(--app-accent)] animate-spin" />
@@ -266,9 +273,10 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
 
       {/* 3. Bottom Quick Navigation Bar (Floating/Collapsible) */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 py-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 pt-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
           showControls ? 'translate-y-0' : 'translate-y-full'
         }`}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
       >
         <button
           onClick={(e) => {

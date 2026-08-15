@@ -29,7 +29,13 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col justify-between p-6 select-none overflow-y-auto no-scrollbar">
+    <div
+      className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col justify-between px-6 select-none overflow-y-auto no-scrollbar"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
+      }}
+    >
       {/* Brand Header */}
       <div className="pt-10 flex flex-col items-center text-center">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-[var(--app-surface)] border border-[var(--app-border)] shadow-xl mb-6 text-[var(--app-accent)]">
