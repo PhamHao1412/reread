@@ -60,7 +60,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
     { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF', icon: Sparkles },
     { id: 'sepia', label: 'Sepia', bg: '#F7EFE1', text: '#2D2013', icon: Sun },
     { id: 'amoled', label: 'AMOLED', bg: '#000000', text: '#FFFFFF', icon: Moon },
-    { id: 'light', label: 'Sáng', bg: '#F8FAFC', text: '#0F172A', icon: Sun },
+    { id: 'light', label: 'Light', bg: '#F8FAFC', text: '#0F172A', icon: Sun },
   ];
 
   const fontFamilies: { id: FontFamily; label: string }[] = [
@@ -114,7 +114,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
             max={Math.max(totalPages, 1)}
             value={currentPage}
             onChange={(e) => onPageScrub(parseInt(e.target.value, 10))}
-            className="w-full h-2 bg-[var(--app-surface)] rounded-lg appearance-none cursor-pointer accent-purple-primary"
+            className="w-full h-2 bg-[var(--app-surface)] rounded-lg appearance-none cursor-pointer" style={{ accentColor: 'var(--app-accent)' }}
           />
         </div>
 
@@ -128,7 +128,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
               onClick={() => setReadingMode('standard')}
               className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
                 settings.readingMode === 'standard'
-                  ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
+                  ? 'btn-accent shadow-lg'
                   : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
               }`}
             >
@@ -139,7 +139,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
               onClick={() => setReadingMode('readthrough')}
               className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
                 settings.readingMode === 'readthrough'
-                  ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
+                  ? 'btn-accent shadow-lg'
                   : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
               }`}
             >
@@ -209,7 +209,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
                 onClick={() => setFontFamily(f.id)}
                 className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
                   settings.fontFamily === f.id
-                    ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                    ? 'btn-accent shadow-md'
                     : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
                 }`}
               >

@@ -19,14 +19,15 @@
 }
 
 :root {
-  --app-bg: #1A0D1C;
-  --app-surface: #261329;
-  --app-card: #351B3A;
-  --app-text: #FFFFFF;
-  --app-text-secondary: #D6C5DB;
-  --app-muted: #9A84A1;
-  --app-border: rgba(168, 47, 208, 0.2);
-  --app-accent: #A82FD0;
+  /* Default theme: Sepia — warm parchment tones */
+  --app-bg:             #F7EFE1;
+  --app-surface:        #EDE2CE;
+  --app-card:           #E1D3BA;
+  --app-text:           #2D2013;
+  --app-text-secondary: #523F2C;
+  --app-muted:          #7E6851;
+  --app-border:         rgba(126, 104, 81, 0.25);
+  --app-accent:         #C27803;
 
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -34,14 +35,28 @@
   --sar: env(safe-area-inset-right, 0px);
 }
 
-/* 100dvh Lock & Zero-Overscroll for Mobile (Same as Pocky) */
-html, body {
-  height: 100dvh;
+/* Full-screen Lock & Zero-Overscroll for Mobile
+   IMPORTANT: Match Pocky's proven pattern:
+   - html: height 100% (NOT 100dvh — avoids iOS PWA viewport bug)
+   - body: min-height 100% + flex column
+   Only the AppShell's inner container should use 100dvh. */
+html {
+  height: 100%;
   margin: 0;
   padding: 0;
+  /* Sepia surface — iOS uses this for the home-indicator gap zone */
+  background-color: #EDE2CE;
+}
+
+body {
+  height: 100%;
+  min-height: 100%;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
   overscroll-behavior: none;
-  background-color: var(--app-bg);
+  /* Must match nav bar color so the iOS PWA home-indicator gap blends with nav. */
+  background-color: #EDE2CE;
   color: var(--app-text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   user-select: none;
@@ -51,12 +66,13 @@ html, body {
 }
 
 #root {
-  height: 100dvh;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
   width: 100%;
   display: flex;
   justify-content: center;
   background-color: var(--app-bg);
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -96,15 +112,47 @@ html, body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Active Highlight ONLY when selected for translation */
+/* Active Highlight ONLY when selected for translation
+   Uses amber-toned glow in sepia, accent color in other themes. */
 .read-word.read-word-selected {
   background-color: var(--app-accent);
   color: #FFFFFF !important;
   border-radius: 4px;
-  box-shadow: 0 0 0 2px rgba(168, 47, 208, 0.4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-accent) 40%, transparent);
+}
+
+/* Theme-aware selected/active button — replaces hardcoded bg-purple-primary */
+.btn-accent {
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+  color: #FFFFFF;
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--app-accent) 35%, transparent);
+}
+
+/* Text selection highlight — amber in sepia, accent in other themes */
+::selection {
+  background-color: color-mix(in srgb, var(--app-accent) 30%, transparent);
+  color: var(--app-text);
 }
 
 /* Bottom Nav Safe Area — handles env(safe-area-inset-bottom) correctly on iOS PWA */
 .bottom-nav-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── iOS PWA Standalone Mode Fix ──────────────────────────────────────────
+   When launched from Add to Home Screen, iOS Safari's standalone mode can
+   miscalculate 100dvh — the fixed wrapper ends above the physical bottom,
+   leaving a dark gap under the bottom nav bar.
+   We patch html/body/#root to always be exactly the full screen height. */
+@media all and (display-mode: standalone) {
+  html, body {
+    height: 100%;
+    /* Fallback for older iOS that ignores 100dvh in standalone */
+    min-height: -webkit-fill-available;
+  }
+  #root {
+    height: 100%;
+    min-height: -webkit-fill-available;
+  }
 }

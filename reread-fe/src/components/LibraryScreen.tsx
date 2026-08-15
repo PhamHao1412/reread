@@ -90,7 +90,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
             onClick={() => setSelectedFormat(fmt.id)}
             className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
               selectedFormat === fmt.id
-                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                ? 'btn-accent shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80'
             }`}
           >
@@ -143,8 +143,9 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-[var(--app-surface)] overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-purple-primary to-orange-warm rounded-full transition-all"
+                      className="h-full rounded-full transition-all"
                       style={{
+                        background: 'linear-gradient(90deg, var(--app-accent), color-mix(in srgb, var(--app-accent) 70%, #D4A017))',
                         width: `${Math.min(
                           Math.round(((recentBook.current_page || 1) / (recentBook.total_pages || 1)) * 100),
                           100
@@ -235,8 +236,8 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
                     {progress > 0 && (
                       <div className="h-1 w-full rounded-full bg-[var(--app-surface)] overflow-hidden">
                         <div
-                          className="h-full bg-purple-primary rounded-full"
-                          style={{ width: `${Math.min(progress, 100)}%` }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: 'var(--app-accent)', width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>
                     )}

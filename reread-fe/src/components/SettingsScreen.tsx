@@ -12,7 +12,7 @@ export const SettingsScreen: React.FC = () => {
     { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF' },
     { id: 'sepia', label: 'Sepia', bg: '#F7EFE1', text: '#2D2013' },
     { id: 'amoled', label: 'AMOLED', bg: '#000000', text: '#FFFFFF' },
-    { id: 'light', label: 'Sáng', bg: '#F8FAFC', text: '#0F172A' },
+    { id: 'light', label: 'Light', bg: '#F8FAFC', text: '#0F172A' },
   ];
 
   return (
@@ -30,7 +30,7 @@ export const SettingsScreen: React.FC = () => {
       {user && (
         <div className="p-4 rounded-3xl bg-[var(--app-card)] border border-[var(--app-border)] shadow-sm">
           <div className="flex items-center space-x-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-purple-primary to-orange-warm flex items-center justify-center text-white font-black text-lg shadow-inner">
+            <div className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-inner" style={{ background: 'linear-gradient(135deg, var(--app-accent), color-mix(in srgb, var(--app-accent) 60%, var(--app-bg)))' }}>
               {user.username.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden">
@@ -66,7 +66,7 @@ export const SettingsScreen: React.FC = () => {
                 }`}
               >
                 <span className="text-xs font-bold">{t.label}</span>
-                {isSelected && <div className="h-2 w-2 rounded-full bg-purple-primary" />}
+                {isSelected && <div className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--app-accent)' }} />}
               </button>
             );
           })}
@@ -83,7 +83,7 @@ export const SettingsScreen: React.FC = () => {
             onClick={() => setReadingMode('standard')}
             className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
               settings.readingMode === 'standard'
-                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                ? 'btn-accent shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >
@@ -94,7 +94,7 @@ export const SettingsScreen: React.FC = () => {
             onClick={() => setReadingMode('readthrough')}
             className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
               settings.readingMode === 'readthrough'
-                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                ? 'btn-accent shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >

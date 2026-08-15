@@ -16,11 +16,20 @@ export function App() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-full max-w-[420px] md:border-x md:border-purple-primary/20 md:shadow-2xl bg-plum-deep text-white flex flex-col items-center justify-center p-6 space-y-4">
-        <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-purple-primary/30 to-orange-warm/20 border border-purple-primary/20 flex items-center justify-center animate-pulse shadow-2xl">
-          <BookOpen className="h-8 w-8 text-purple-light" />
+      <div
+        className="h-[100dvh] w-full max-w-[420px] md:border-x md:shadow-2xl flex flex-col items-center justify-center p-6 space-y-4"
+        style={{ backgroundColor: 'var(--app-bg)', color: 'var(--app-text)', borderColor: 'var(--app-border)' }}
+      >
+        <div
+          className="h-16 w-16 rounded-3xl flex items-center justify-center animate-pulse shadow-2xl"
+          style={{
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--app-accent) 25%, transparent), color-mix(in srgb, var(--app-accent) 10%, transparent))',
+            border: '1px solid color-mix(in srgb, var(--app-accent) 30%, transparent)',
+          }}
+        >
+          <BookOpen className="h-8 w-8" style={{ color: 'var(--app-accent)' }} />
         </div>
-        <p className="text-sm font-bold bg-gradient-to-r from-purple-light to-orange-warm bg-clip-text text-transparent">
+        <p className="text-sm font-bold" style={{ color: 'var(--app-accent)' }}>
           Reread Mobile
         </p>
       </div>

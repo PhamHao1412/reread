@@ -283,7 +283,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
                 e.stopPropagation();
                 onPageChange(currentPage + 1, totalPages);
               }}
-              className="w-full py-2.5 px-4 rounded-2xl bg-purple-primary text-white text-xs font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5"
+              className="w-full py-2.5 px-4 rounded-2xl btn-accent text-xs font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5"
             >
               <span>Đọc chương tiếp (Trang {currentPage + 1})</span>
               <ChevronRight className="h-4 w-4" />
