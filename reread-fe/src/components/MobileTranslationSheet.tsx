@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TranslationData } from '../types';
 import { api } from '../lib/api';
 import { X, Volume2, Bookmark, Check, Loader2, AlertCircle } from 'lucide-react';
@@ -19,6 +19,35 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
   const [error, setError] = useState<string>('');
   const [saved, setSaved] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+
+  // Protection against synthetic click events from long-press/touch release
+  const mountTimeRef = useRef<number>(Date.now());
+  const backdropPointerDownRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    mountTimeRef.current = Date.now();
+    backdropPointerDownRef.current = false;
+  }, [word]);
+
+  const handleBackdropPointerDown = (e: React.PointerEvent | React.TouchEvent | React.MouseEvent) => {
+    // Only mark true if pointerdown started on the backdrop itself
+    if (e.target === e.currentTarget) {
+      backdropPointerDownRef.current = true;
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // 1. Ignore if clicked within 400ms of opening (synthetic touchup clicks from prior touch gesture)
+    if (Date.now() - mountTimeRef.current < 400) {
+      return;
+    }
+    // 2. Only close if the touch/pointer down started on the backdrop after mount
+    if (!backdropPointerDownRef.current) {
+      return;
+    }
+    onClose();
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -85,10 +114,19 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} />
+      {/* Backdrop with synthetic touch release protection */}
+      <div
+        className="absolute inset-0"
+        onPointerDown={handleBackdropPointerDown}
+        onMouseDown={handleBackdropPointerDown}
+        onTouchStart={handleBackdropPointerDown}
+        onClick={handleBackdropClick}
+      />
 
-      <div className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none"
+      >
         {/* Drag handle */}
         <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-4" />
 

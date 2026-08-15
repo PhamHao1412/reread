@@ -18,8 +18,8 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/95 backdrop-blur-xl animate-fade-in select-none">
-      {/* Top Header */}
-      <div className="w-full flex items-center justify-between px-5 py-4 z-10">
+      {/* Top Header with Safe Area Top */}
+      <div className="w-full flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 z-10">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-extrabold text-white">
             Sơ đồ & Hình ảnh — Trang {pageNumber}
@@ -42,8 +42,8 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
         />
       </div>
 
-      {/* Bottom info caption */}
-      <div className="w-full py-4 text-center text-xs text-white/60 z-10">
+      {/* Bottom info caption with Safe Area Bottom */}
+      <div className="w-full pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] text-center text-xs text-white/60 z-10">
         <span>💡 Dùng 2 ngón tay để phóng to / thu nhỏ hình ảnh</span>
       </div>
     </div>

@@ -11,6 +11,7 @@ interface ReadthroughViewerProps {
   settings: ReaderSettings;
   currentPage: number;
   totalPages: number;
+  activeWord?: string | null;
   onPageChange: (page: number, totalPages: number) => void;
   onTranslateWord: (word: string) => void;
   onTap: () => void;
@@ -22,6 +23,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
   settings,
   currentPage,
   totalPages,
+  activeWord,
   onPageChange,
   onTranslateWord,
   onTap,
@@ -44,6 +46,20 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     }
     setShowInlineImage(false);
   }, [currentPage]);
+
+  // Sync active translated word highlight
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const words = containerRef.current.querySelectorAll('.read-word');
+    words.forEach((el) => {
+      const dataWord = el.getAttribute('data-word');
+      if (activeWord && dataWord && dataWord.toLowerCase() === activeWord.toLowerCase()) {
+        el.classList.add('read-word-selected');
+      } else {
+        el.classList.remove('read-word-selected');
+      }
+    });
+  }, [activeWord, text]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -88,7 +104,21 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     return getWordAtPoint(clientX, clientY);
   };
 
-  // 1. Desktop Double Click Handler (for Mac/PC)
+  // 1. Single Click & Double Click Handlers (for Desktop / Mouse)
+  const handleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't trigger if clicked on a button or inside modal
+    if (target.closest('button, .image-modal, input')) return;
+
+    const word = extractWord(target, e.clientX, e.clientY);
+    if (word) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.getSelection()?.removeAllRanges();
+      onTranslateWord(word);
+    }
+  };
+
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -101,7 +131,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     }
   };
 
-  // 2. Mobile Touch & Long-Press (Nhấn giữ ~380ms)
+  // 2. Mobile Touch & Long-Press (Nhấn giữ ~380ms hoặc Chạm 1-chạm)
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartX.current = touch.clientX;
@@ -158,6 +188,11 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
   const handleTouchEnd = (e: React.TouchEvent) => {
     // If long press was triggered, prevent any other tap actions
     if (isLongPressTriggeredRef.current) {
+      isLongPressTriggeredRef.current = false;
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -174,29 +209,38 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     const diffY = touch.clientY - touchStartY.current;
     const duration = Date.now() - touchStartTime.current;
 
-    // ── 1. Edge Tap Zones & Quick Tap Navigation ──
-    const isStationaryTap = Math.abs(diffX) < 14 && Math.abs(diffY) < 14 && duration < 320;
+    // ── 1. Edge Tap Zones & 1-Tap Word Translation ──
+    const isStationaryTap = Math.abs(diffX) < 14 && Math.abs(diffY) < 14 && duration < 380;
     if (isStationaryTap) {
       const screenWidth = window.innerWidth || 360;
       const xRatio = touch.clientX / screenWidth;
 
-      // Tap on Left Edge (< 20%) -> Prev Page
-      if (xRatio < 0.20) {
+      // Tap on Left Edge (< 18%) -> Prev Page
+      if (xRatio < 0.18) {
         if (currentPage > 1) {
           onPageChange(currentPage - 1, totalPages);
         }
         return;
       }
 
-      // Tap on Right Edge (> 80%) -> Next Page
-      if (xRatio > 0.80) {
+      // Tap on Right Edge (> 82%) -> Next Page
+      if (xRatio > 0.82) {
         if (currentPage < totalPages) {
           onPageChange(currentPage + 1, totalPages);
         }
         return;
       }
 
-      // Center area tap -> Toggle menu controls
+      // Center area tap: Check if a word is tapped for 1-touch instant dictionary lookup
+      const targetElement = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
+      const word = extractWord(targetElement, touch.clientX, touch.clientY);
+
+      if (word) {
+        onTranslateWord(word);
+        return;
+      }
+
+      // If tapped on empty space / margin -> Toggle menu controls
       onTap();
       return;
     }
@@ -253,6 +297,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
   return (
     <div
       ref={containerRef}
+      onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

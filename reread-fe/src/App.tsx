@@ -16,7 +16,7 @@ export function App() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-full max-w-[420px] bg-plum-deep text-white flex flex-col items-center justify-center p-6 space-y-4">
+      <div className="h-[100dvh] w-full max-w-[420px] md:border-x md:border-purple-primary/20 md:shadow-2xl bg-plum-deep text-white flex flex-col items-center justify-center p-6 space-y-4">
         <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-purple-primary/30 to-orange-warm/20 border border-purple-primary/20 flex items-center justify-center animate-pulse shadow-2xl">
           <BookOpen className="h-8 w-8 text-purple-light" />
         </div>
@@ -34,7 +34,7 @@ export function App() {
   // Active Reading Workspace
   if (activeBook) {
     return (
-      <div className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden shadow-2xl border-x border-purple-primary/10 select-none">
+      <div className="h-[100dvh] w-full max-w-[420px] md:border-x md:border-[var(--app-border)] md:shadow-2xl bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col relative overflow-hidden select-none">
         <ReaderScreen
           book={activeBook}
           onBack={() => setActiveBook(null)}

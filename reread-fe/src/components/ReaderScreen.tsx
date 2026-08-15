@@ -139,9 +139,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
 
   return (
     <div className="h-full w-full flex flex-col relative overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] select-none">
-      {/* 1. Top Reader Navigation Bar (Floating/Collapsible) */}
+      {/* 1. Top Reader Navigation Bar (Floating/Collapsible with Safe Area Top) */}
       <div
-        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 py-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] pb-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm select-none ${
           showControls ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -217,8 +217,8 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         </div>
       </div>
 
-      {/* 2. Main Reader Viewport */}
-      <div className="flex-1 w-full h-full relative overflow-hidden pt-12 pb-14">
+      {/* 2. Main Reader Viewport with Safe Area Spacing */}
+      <div className="flex-1 w-full h-full relative overflow-hidden pt-[calc(env(safe-area-inset-top,0px)+3.75rem)] pb-[calc(env(safe-area-inset-bottom,0px)+4rem)]">
         {loadingFile ? (
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
             <Loader2 className="h-9 w-9 text-purple-light animate-spin" />
@@ -256,6 +256,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
               settings={settings}
               currentPage={currentPage}
               totalPages={totalPages}
+              activeWord={translatingWord}
               onPageChange={handlePageChange}
               onTranslateWord={(word) => setTranslatingWord(word)}
               onTap={toggleControls}
@@ -264,9 +265,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         ) : null}
       </div>
 
-      {/* 3. Bottom Quick Navigation Bar (Floating/Collapsible) */}
+      {/* 3. Bottom Quick Navigation Bar flush with safe-area */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 py-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 pt-2 pb-[max(env(safe-area-inset-bottom,0px),0.625rem)] flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm select-none ${
           showControls ? 'translate-y-0' : 'translate-y-full'
         }`}
       >

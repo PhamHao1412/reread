@@ -29,9 +29,9 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] w-full max-w-[420px] bg-plum-deep text-white flex flex-col justify-between p-6 select-none overflow-y-auto no-scrollbar">
+    <div className="h-[100dvh] w-full max-w-[420px] md:border-x md:border-purple-primary/20 md:shadow-2xl bg-plum-deep text-white flex flex-col justify-between pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-6 px-6 select-none overflow-y-auto no-scrollbar">
       {/* Brand Icon Header */}
-      <div className="pt-10 text-center">
+      <div className="pt-4 text-center">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-primary/30 to-orange-warm/20 border border-purple-primary/20 shadow-2xl mb-6">
           <BookOpen className="h-10 w-10 text-purple-light" />
         </div>

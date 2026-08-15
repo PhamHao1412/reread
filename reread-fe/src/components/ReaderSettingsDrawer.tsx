@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useReader } from '../context/ReaderContext';
 import { ReaderTheme, FontFamily } from '../types';
 import { X, Sun, Moon, Sparkles, BookOpen, Zap, Type } from 'lucide-react';
@@ -27,7 +27,34 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
     decreaseFontSize,
   } = useReader();
 
+  const mountTimeRef = useRef<number>(Date.now());
+  const backdropPointerDownRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      mountTimeRef.current = Date.now();
+      backdropPointerDownRef.current = false;
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const handleBackdropPointerDown = (e: React.PointerEvent | React.TouchEvent | React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      backdropPointerDownRef.current = true;
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (Date.now() - mountTimeRef.current < 400) {
+      return;
+    }
+    if (!backdropPointerDownRef.current) {
+      return;
+    }
+    onClose();
+  };
 
   const themes: { id: ReaderTheme; label: string; bg: string; text: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF', icon: Sparkles },
@@ -44,10 +71,19 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
-      {/* Overlay dismissal */}
-      <div className="absolute inset-0" onClick={onClose} />
+      {/* Overlay dismissal with synthetic touch release protection */}
+      <div
+        className="absolute inset-0"
+        onPointerDown={handleBackdropPointerDown}
+        onMouseDown={handleBackdropPointerDown}
+        onTouchStart={handleBackdropPointerDown}
+        onClick={handleBackdropClick}
+      />
 
-      <div className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none"
+      >
         {/* Drag handle */}
         <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-5" />
 

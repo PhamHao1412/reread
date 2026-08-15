@@ -13,7 +13,7 @@ export function sanitizeSingleWord(raw: string): string | null {
   }
 
   const clean = trimmed.replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+|[^a-zA-Z0-9\u00C0-\u1EF9]+$/g, '');
-  if (clean.length < 2 || clean.length > 45) {
+  if (clean.length < 1 || clean.length > 45) {
     return null;
   }
 
