@@ -1,0 +1,343 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Book } from '../types';
+import { useReader } from '../context/ReaderContext';
+import { PdfMobileViewer } from './PdfMobileViewer';
+import { ReadthroughViewer } from './ReadthroughViewer';
+import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
+import { TableOfContentsDrawer } from './TableOfContentsDrawer';
+import { MobileTranslationSheet } from './MobileTranslationSheet';
+import { api } from '../lib/api';
+import { extractStructuredTextFromPageItems } from '../lib/pdfTextExtractor';
+import { extractTableOfContents, TocItem } from '../lib/pdfToc';
+import { renderPageToDataUrl } from '../lib/pageRenderer';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
+import { 
+  ArrowLeft, Sliders, Zap, BookOpen, Bookmark, 
+  BookmarkCheck, ChevronLeft, ChevronRight, AlertCircle, Loader2, List 
+} from 'lucide-react';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
+interface ReaderScreenProps {
+  book: Book;
+  onBack: () => void;
+}
+
+export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
+  const { settings, setReadingMode } = useReader();
+  const [currentPage, setCurrentPage] = useState<number>(book.current_page || 1);
+  const [totalPages, setTotalPages] = useState<number>(book.total_pages || 1);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [loadingFile, setLoadingFile] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string>('');
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [pageImageUrl, setPageImageUrl] = useState<string>('');
+  const [showControls, setShowControls] = useState<boolean>(true);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
+  const [showTocDrawer, setShowTocDrawer] = useState<boolean>(false);
+  const [tocItems, setTocItems] = useState<TocItem[]>([]);
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [translatingWord, setTranslatingWord] = useState<string | null>(null);
+
+  const progressTimerRef = useRef<any>(null);
+
+  // 1. Fetch book content blob, load PDF document, and extract Table of Contents
+  useEffect(() => {
+    let active = true;
+    let localUrl = '';
+
+    const loadBookContent = async () => {
+      setLoadingFile(true);
+      setLoadError('');
+      try {
+        const url = await api.getBookFileBlobUrl(book);
+        if (!active) return;
+        localUrl = url;
+
+        const doc = await pdfjsLib.getDocument({
+          url,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          cMapPacked: true,
+        }).promise;
+
+        if (!active) return;
+        setPdfDoc(doc);
+        setTotalPages(doc.numPages);
+
+        // Extract Table of Contents
+        extractTableOfContents(doc).then((items) => {
+          if (active) setTocItems(items);
+        });
+      } catch (err: any) {
+        if (!active) return;
+        setLoadError(err.message || 'Không thể tải nội dung cuốn sách.');
+      } finally {
+        if (active) setLoadingFile(false);
+      }
+    };
+
+    loadBookContent();
+
+    return () => {
+      active = false;
+      if (localUrl) {
+        URL.revokeObjectURL(localUrl);
+      }
+    };
+  }, [book.id]);
+
+  // 2. Extract structured text and page image snapshot whenever page changes
+  const extractPageData = useCallback(async (doc: any, pageNum: number) => {
+    if (!doc) return;
+    try {
+      const page = await doc.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const structured = extractStructuredTextFromPageItems(textContent.items);
+      setExtractedText(structured);
+
+      // Generate page image snapshot for diagrams and figures
+      const imgUrl = await renderPageToDataUrl(page, 900);
+      setPageImageUrl(imgUrl);
+    } catch {
+      setExtractedText('');
+      setPageImageUrl('');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pdfDoc) {
+      extractPageData(pdfDoc, currentPage);
+    }
+  }, [pdfDoc, currentPage, extractPageData]);
+
+  // 3. Sync reading progress with debounce
+  const handlePageChange = (page: number, total: number) => {
+    const validPage = Math.min(Math.max(page, 1), total || totalPages);
+    setCurrentPage(validPage);
+    if (total) setTotalPages(total);
+
+    if (progressTimerRef.current) {
+      clearTimeout(progressTimerRef.current);
+    }
+
+    progressTimerRef.current = setTimeout(() => {
+      api.updateProgress(book.id, validPage, total || totalPages).catch(() => {});
+    }, 800);
+  };
+
+  const toggleControls = () => {
+    setShowControls((prev) => !prev);
+  };
+
+  const toggleBookmark = async () => {
+    setIsBookmarked(!isBookmarked);
+    if (!isBookmarked) {
+      await api.addBookmark(book.id, currentPage, `Trang ${currentPage} - ${book.title}`).catch(() => {});
+    }
+  };
+
+  return (
+    <div className="h-full w-full flex flex-col relative overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] select-none">
+      {/* 1. Top Reader Navigation Bar (Floating/Collapsible) */}
+      <div
+        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 py-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+          showControls ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="flex items-center space-x-3 overflow-hidden">
+          <button
+            onClick={onBack}
+            className="p-1.5 rounded-xl bg-[var(--app-card)] text-[var(--app-text)] hover:opacity-80 transition-all shrink-0 border border-[var(--app-border)]"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="overflow-hidden">
+            <h2 className="text-sm font-extrabold text-[var(--app-text)] truncate">
+              {book.title}
+            </h2>
+            <p className="text-[10px] text-[var(--app-muted)] font-bold">
+              Trang {currentPage} / {totalPages} ({Math.round((currentPage / Math.max(totalPages, 1)) * 100)}%)
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-1.5 shrink-0">
+          {/* Table of Contents Button */}
+          <button
+            onClick={() => setShowTocDrawer(true)}
+            title="Mục lục sách"
+            className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80 transition-all"
+          >
+            <List className="h-4 w-4" />
+          </button>
+
+          {/* Quick Reading Mode Switch */}
+          <button
+            onClick={() =>
+              setReadingMode(settings.readingMode === 'standard' ? 'readthrough' : 'standard')
+            }
+            title={settings.readingMode === 'standard' ? 'Bật chế độ Readthrough' : 'Xem PDF gốc'}
+            className={`p-2 rounded-xl border transition-all ${
+              settings.readingMode === 'readthrough'
+                ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
+                : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
+            }`}
+          >
+            {settings.readingMode === 'readthrough' ? (
+              <Zap className="h-4 w-4 fill-white" />
+            ) : (
+              <BookOpen className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Bookmark Button */}
+          <button
+            onClick={toggleBookmark}
+            className={`p-2 rounded-xl border transition-all ${
+              isBookmarked
+                ? 'bg-orange-warm/20 border-orange-warm/40 text-orange-warm'
+                : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-muted)] hover:text-[var(--app-text)]'
+            }`}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck className="h-4 w-4" />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Settings Drawer Button */}
+          <button
+            onClick={() => setShowSettingsDrawer(true)}
+            className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80 transition-all"
+          >
+            <Sliders className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Main Reader Viewport */}
+      <div className="flex-1 w-full h-full relative overflow-hidden pt-12 pb-14">
+        {loadingFile ? (
+          <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
+            <Loader2 className="h-9 w-9 text-purple-light animate-spin" />
+            <p className="text-sm font-bold text-[var(--app-text)]">Đang tải sách vào bộ nhớ di động...</p>
+            <p className="text-xs text-[var(--app-muted)] max-w-[240px]">
+              Đang kết nối để nạp dữ liệu cuốn sách
+            </p>
+          </div>
+        ) : loadError ? (
+          <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center space-y-4">
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              <p className="text-xs font-bold">{loadError}</p>
+            </div>
+            <button
+              onClick={onBack}
+              className="px-5 py-2.5 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] text-xs font-bold"
+            >
+              Quay lại tủ sách
+            </button>
+          </div>
+        ) : pdfDoc ? (
+          settings.readingMode === 'standard' ? (
+            <PdfMobileViewer
+              pdfDoc={pdfDoc}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onTap={toggleControls}
+            />
+          ) : (
+            <ReadthroughViewer
+              text={extractedText}
+              pageImageUrl={pageImageUrl}
+              settings={settings}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onTranslateWord={(word) => setTranslatingWord(word)}
+              onTap={toggleControls}
+            />
+          )
+        ) : null}
+      </div>
+
+      {/* 3. Bottom Quick Navigation Bar (Floating/Collapsible) */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 py-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+          showControls ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (currentPage > 1) handlePageChange(currentPage - 1, totalPages);
+          }}
+          disabled={currentPage <= 1}
+          className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] disabled:opacity-30 active:scale-95 transition-all shadow-xs"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        {/* Mini progress bar & scrubber pill */}
+        <div 
+          onClick={() => setShowSettingsDrawer(true)}
+          className="flex-1 mx-3 px-3 py-1.5 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] flex flex-col items-center justify-center cursor-pointer active:scale-98 shadow-xs"
+        >
+          <div className="flex justify-between w-full text-[10px] font-bold text-[var(--app-text)] mb-1">
+            <span>Trang {currentPage}</span>
+            <span className="text-[var(--app-accent)] font-extrabold">{Math.round((currentPage / Math.max(totalPages, 1)) * 100)}%</span>
+            <span className="text-[var(--app-muted)]">{totalPages} trang</span>
+          </div>
+          <div className="w-full h-1 bg-[var(--app-surface)] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-purple-primary to-orange-warm rounded-full"
+              style={{ width: `${Math.min(Math.round((currentPage / Math.max(totalPages, 1)) * 100), 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (currentPage < totalPages) handlePageChange(currentPage + 1, totalPages);
+          }}
+          disabled={currentPage >= totalPages}
+          className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] disabled:opacity-30 active:scale-95 transition-all shadow-xs"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* 4. Table of Contents Drawer Modal */}
+      <TableOfContentsDrawer
+        isOpen={showTocDrawer}
+        onClose={() => setShowTocDrawer(false)}
+        items={tocItems}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onSelectPage={(page) => handlePageChange(page, totalPages)}
+      />
+
+      {/* 5. Settings Drawer Modal */}
+      <ReaderSettingsDrawer
+        isOpen={showSettingsDrawer}
+        onClose={() => setShowSettingsDrawer(false)}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageScrub={(page) => handlePageChange(page, totalPages)}
+      />
+
+      {/* 6. Mobile Instant Translation Bottom Sheet */}
+      {translatingWord && (
+        <MobileTranslationSheet
+          word={translatingWord}
+          bookId={book.id}
+          onClose={() => setTranslatingWord(null)}
+        />
+      )}
+    </div>
+  );
+};

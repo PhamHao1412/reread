@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-plum-deep: #1A0D1C;
+  --color-plum-surface: #261329;
+  --color-plum-secondary: #351B3A;
+  --color-purple-primary: #A82FD0;
+  --color-purple-light: #C13DDB;
+  --color-orange-warm: #FF9D00;
+
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-card: var(--app-card);
+  --color-app-text: var(--app-text);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-muted: var(--app-muted);
+  --color-app-border: var(--app-border);
+  --color-app-accent: var(--app-accent);
+}
+
+:root {
+  --app-bg: #1A0D1C;
+  --app-surface: #261329;
+  --app-card: #351B3A;
+  --app-text: #FFFFFF;
+  --app-text-secondary: #D6C5DB;
+  --app-muted: #9A84A1;
+  --app-border: rgba(168, 47, 208, 0.2);
+  --app-accent: #A82FD0;
+}
+
+/* 100dvh Lock & Zero-Overscroll for Mobile */
+html, body {
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  height: 100dvh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000000;
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Reader Typography Classes */
+.font-serif-book {
+  font-family: 'Merriweather', Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
+.font-sans-book {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.font-mono-book {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Clean word wrapper for touch detection */
+.read-word {
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.read-word:active {
+  background-color: rgba(168, 47, 208, 0.25);
+}

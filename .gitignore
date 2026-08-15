@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+*/node_modules/
+.pnp
+.pnp.js
+
+# Build outputs & frontend bundles
+dist/
+*/dist/
+dist-ssr/
+build/
+*.local
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & OS files
+.idea/
+*/.idea/
+.vscode/
+*/.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+*/.DS_Store
+Thumbs.db
+
+# Go Backend compiled binaries & temporary scratch
+bin/
+*/bin/
+uploads/
+*/uploads/
+scratch/
+*/scratch/
+serverd
+*/serverd
+query_db
+*/query_db
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+tmp/
+*/tmp/
+
+# Local databases
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+*.db
+*.sqlite
+*.sqlite3

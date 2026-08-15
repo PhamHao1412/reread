@@ -1,0 +1,94 @@
+package repository
+
+import (
+	"context"
+	"readthrough-be/internal/entity"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type IBookRepository interface {
+	Create(ctx context.Context, book *entity.Book) error
+	List(ctx context.Context, userID uuid.UUID, search string) ([]entity.Book, error)
+	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*entity.Book, error)
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	UpdateProgress(ctx context.Context, id uuid.UUID, userID uuid.UUID, page int, cfi string, totalPages int) error
+	UpdateSize(ctx context.Context, id uuid.UUID, userID uuid.UUID, size int64) error
+	// UpdateUploadStatus sets upload_status and upload_progress on a book record.
+	UpdateUploadStatus(ctx context.Context, id uuid.UUID, status string, progress int) error
+	// MarkOrphanedUploadsFailed marks any book stuck in "uploading" status as "failed".
+	// Called on server startup to clean up uploads that were interrupted by a restart.
+	MarkOrphanedUploadsFailed(ctx context.Context) error
+}
+
+type BookRepository struct {
+	db *gorm.DB
+}
+
+func NewBookRepository(db *gorm.DB) *BookRepository {
+	return &BookRepository{db: db}
+}
+
+func (r *BookRepository) Create(ctx context.Context, book *entity.Book) error {
+	return r.db.WithContext(ctx).Create(book).Error
+}
+
+func (r *BookRepository) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).Delete(&entity.Book{}).Error
+}
+
+func (r *BookRepository) List(ctx context.Context, userID uuid.UUID, search string) ([]entity.Book, error) {
+	var list []entity.Book
+	query := r.db.WithContext(ctx).Where("user_id = ? AND deleted_at IS NULL", userID)
+	if search != "" {
+		// Use a sub-query group for search text filters to maintain user_id isolation
+		query = query.Where("title ILIKE ? OR author ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+	err := query.Order("updated_at desc").Find(&list).Error
+	return list, err
+}
+
+func (r *BookRepository) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*entity.Book, error) {
+	var book entity.Book
+	err := r.db.WithContext(ctx).First(&book, "id = ? AND user_id = ?", id, userID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &book, nil
+}
+
+func (r *BookRepository) UpdateProgress(ctx context.Context, id uuid.UUID, userID uuid.UUID, page int, cfi string, totalPages int) error {
+	updates := map[string]interface{}{
+		"current_page": page,
+	}
+	if cfi != "" {
+		updates["epub_cfi"] = cfi
+	}
+	if totalPages > 0 {
+		updates["total_pages"] = totalPages
+	}
+	return r.db.WithContext(ctx).Model(&entity.Book{}).Where("id = ? AND user_id = ?", id, userID).Updates(updates).Error
+}
+
+func (r *BookRepository) UpdateSize(ctx context.Context, id uuid.UUID, userID uuid.UUID, size int64) error {
+	return r.db.WithContext(ctx).Model(&entity.Book{}).Where("id = ? AND user_id = ?", id, userID).Update("file_size", size).Error
+}
+
+func (r *BookRepository) UpdateUploadStatus(ctx context.Context, id uuid.UUID, status string, progress int) error {
+	return r.db.WithContext(ctx).Model(&entity.Book{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"upload_status":   status,
+			"upload_progress": progress,
+		}).Error
+}
+
+func (r *BookRepository) MarkOrphanedUploadsFailed(ctx context.Context) error {
+	return r.db.WithContext(ctx).Model(&entity.Book{}).
+		Where("upload_status = ?", "uploading").
+		Updates(map[string]interface{}{
+			"upload_status":   "failed",
+			"upload_progress": 0,
+		}).Error
+}
