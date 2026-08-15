@@ -90,7 +90,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
             onClick={() => setSelectedFormat(fmt.id)}
             className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
               selectedFormat === fmt.id
-                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
+                ? 'bg-purple-primary border-purple-primary text-white shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80'
             }`}
           >
@@ -235,7 +235,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
                     {progress > 0 && (
                       <div className="h-1 w-full rounded-full bg-[var(--app-surface)] overflow-hidden">
                         <div
-                          className="h-full bg-[var(--app-accent)] rounded-full"
+                          className="h-full bg-purple-primary rounded-full"
                           style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>

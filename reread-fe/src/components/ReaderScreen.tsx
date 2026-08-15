@@ -141,10 +141,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
     <div className="h-full w-full flex flex-col relative overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] select-none">
       {/* 1. Top Reader Navigation Bar (Floating/Collapsible) */}
       <div
-        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 pb-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute top-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 py-3 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
           showControls ? 'translate-y-0' : '-translate-y-full'
         }`}
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
       >
         <div className="flex items-center space-x-3 overflow-hidden">
           <button
@@ -181,7 +180,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
             title={settings.readingMode === 'standard' ? 'Bật chế độ Readthrough' : 'Xem PDF gốc'}
             className={`p-2 rounded-xl border transition-all ${
               settings.readingMode === 'readthrough'
-                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
+                ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
             }`}
           >
@@ -219,16 +218,10 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       </div>
 
       {/* 2. Main Reader Viewport */}
-      <div 
-        className="flex-1 w-full h-full relative overflow-hidden"
-        style={{
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 54px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 58px)',
-        }}
-      >
+      <div className="flex-1 w-full h-full relative overflow-hidden pt-12 pb-14">
         {loadingFile ? (
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
-            <Loader2 className="h-9 w-9 text-[var(--app-accent)] animate-spin" />
+            <Loader2 className="h-9 w-9 text-purple-light animate-spin" />
             <p className="text-sm font-bold text-[var(--app-text)]">Đang tải sách vào bộ nhớ di động...</p>
             <p className="text-xs text-[var(--app-muted)] max-w-[240px]">
               Đang kết nối để nạp dữ liệu cuốn sách
@@ -273,10 +266,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
 
       {/* 3. Bottom Quick Navigation Bar (Floating/Collapsible) */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 pt-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
+        className={`absolute bottom-0 left-0 right-0 z-40 bg-[var(--app-surface)]/95 backdrop-blur-xl border-t border-[var(--app-border)] px-4 py-2.5 flex items-center justify-between transition-transform duration-300 pointer-events-auto shadow-sm ${
           showControls ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
       >
         <button
           onClick={(e) => {
@@ -301,7 +293,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           </div>
           <div className="w-full h-1 bg-[var(--app-surface)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[var(--app-accent)] rounded-full"
+              className="h-full bg-gradient-to-r from-purple-primary to-orange-warm rounded-full"
               style={{ width: `${Math.min(Math.round((currentPage / Math.max(totalPages, 1)) * 100), 100)}%` }}
             />
           </div>

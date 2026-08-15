@@ -88,10 +88,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div
-        className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
-      >
+      <div className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none">
         {/* Drag handle */}
         <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-4" />
 
@@ -188,7 +185,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 className={`w-full flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all active:scale-98 ${
                   saved
                     ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
+                    : 'bg-purple-primary border-purple-primary text-white shadow-lg'
                 }`}
               >
                 {saved ? (

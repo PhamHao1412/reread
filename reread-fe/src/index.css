@@ -1,78 +1,58 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif-book: 'Lora', 'Merriweather', 'Playfair Display', serif;
-  --font-sans-book: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono-book: 'JetBrains Mono', monospace;
-
-  /* Sepia Book Warm Palette (Primary Brand) */
-  --color-sepia-bg: #F7EFE1;
-  --color-sepia-surface: #EDE2CE;
-  --color-sepia-card: #F2E7D5;
-  --color-sepia-text: #2D2013;
-  --color-sepia-muted: #7E6851;
-  --color-sepia-border: #D8C7A5;
-  --color-sepia-accent: #C07A28;
-
-  /* Legacy Plum Palette */
   --color-plum-deep: #1A0D1C;
   --color-plum-surface: #261329;
   --color-plum-secondary: #351B3A;
+  --color-purple-primary: #A82FD0;
+  --color-purple-light: #C13DDB;
+  --color-orange-warm: #FF9D00;
 
-  /* Accent Brand Colors */
-  --color-purple-primary: #C07A28;
-  --color-purple-light: #D97706;
-  --color-orange-warm: #E28743;
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-card: var(--app-card);
+  --color-app-text: var(--app-text);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-muted: var(--app-muted);
+  --color-app-border: var(--app-border);
+  --color-app-accent: var(--app-accent);
 }
 
 :root {
-  /* Default Theme: Sepia (Classic Warm Book Paper) */
-  --app-bg: #F7EFE1;
-  --app-surface: #EDE2CE;
-  --app-card: #F2E7D5;
-  --app-text: #2D2013;
-  --app-text-secondary: #523F2C;
-  --app-muted: #7E6851;
-  --app-border: #D8C7A5;
-  --app-accent: #C07A28;
+  --app-bg: #1A0D1C;
+  --app-surface: #261329;
+  --app-card: #351B3A;
+  --app-text: #FFFFFF;
+  --app-text-secondary: #D6C5DB;
+  --app-muted: #9A84A1;
+  --app-border: rgba(168, 47, 208, 0.2);
+  --app-accent: #A82FD0;
 }
 
-*, *::before, *::after {
-  -webkit-tap-highlight-color: transparent !important;
-  box-sizing: border-box;
-}
-
+/* 100dvh Lock & Zero-Overscroll for Mobile */
 html, body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100%;
-  width: 100%;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
   overscroll-behavior: none;
   background-color: var(--app-bg);
   color: var(--app-text);
-  font-family: var(--font-sans-book);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100%;
-  width: 100%;
+  height: 100dvh;
+  width: 100vw;
   display: flex;
   justify-content: center;
-  align-items: stretch;
-  background-color: var(--app-bg);
+  align-items: center;
+  background-color: #000000;
 }
 
-/* Custom scrollbar utility */
+/* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -81,36 +61,27 @@ html, body {
   scrollbar-width: none;
 }
 
-/* Reader Typography Styles (Natural Left-Aligned Flow) */
-.readable-content {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  -webkit-touch-callout: none !important;
+/* Reader Typography Classes */
+.font-serif-book {
+  font-family: 'Merriweather', Georgia, Cambria, 'Times New Roman', Times, serif;
 }
 
-.readable-content p {
-  margin-bottom: 1.2em;
-  text-align: left !important;
-  text-justify: auto !important;
-  word-spacing: normal !important;
-  letter-spacing: normal !important;
+.font-sans-book {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.font-mono-book {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Clean word wrapper for touch detection */
-.readable-content .read-word,
-.readable-content .bionic-word {
-  display: inline;
-  font-weight: 400 !important;
-  background-color: transparent !important;
-  -webkit-tap-highlight-color: transparent !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
+.read-word {
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
 }
 
-/* Only highlight on mouse hover on desktop devices */
-@media (hover: hover) and (pointer: fine) {
-  .readable-content .read-word:hover {
-    background-color: rgba(192, 122, 40, 0.15) !important;
-    border-radius: 3px;
-  }
+.read-word:active {
+  background-color: rgba(168, 47, 208, 0.25);
 }

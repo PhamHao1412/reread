@@ -1,93 +1,86 @@
 import React, { useState } from 'react';
+import { BookOpen, KeyRound, User, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, KeyRound, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
 
 export const LoginScreen: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.');
+    if (!username.trim() || !password) {
+      setError('Vui lòng nhập tên tài khoản (username) và mật khẩu');
       return;
     }
 
+    setError('');
     setLoading(true);
-    setError(null);
 
     try {
-      await login(username, password);
+      await login(username.trim(), password);
     } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="h-[100dvh] w-full max-w-[420px] bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col justify-between px-6 select-none overflow-y-auto no-scrollbar"
-      style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
-      }}
-    >
-      {/* Brand Header */}
-      <div className="pt-10 flex flex-col items-center text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-[var(--app-surface)] border border-[var(--app-border)] shadow-xl mb-6 text-[var(--app-accent)]">
-          <BookOpen className="h-10 w-10" />
+    <div className="h-[100dvh] w-full max-w-[420px] bg-plum-deep text-white flex flex-col justify-between p-6 select-none overflow-y-auto no-scrollbar">
+      {/* Brand Icon Header */}
+      <div className="pt-10 text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-primary/30 to-orange-warm/20 border border-purple-primary/20 shadow-2xl mb-6">
+          <BookOpen className="h-10 w-10 text-purple-light" />
         </div>
-        <h1 className="text-3xl font-black tracking-tight text-[var(--app-text)]">
-          ReRead
+        <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-light via-white to-orange-warm bg-clip-text text-transparent">
+          Reread
         </h1>
-        <p className="text-xs text-[var(--app-muted)] mt-2 font-medium max-w-[260px] leading-relaxed">
-          Không gian đọc sách di động thông minh với chế độ đọc nhanh Readthrough
+        <p className="text-sm text-text-secondary mt-2">
+          Ứng dụng đọc sách di động cho tài khoản Readthrough
         </p>
       </div>
 
       {/* Login Form */}
-      <form onSubmit={handleSubmit} className="w-full space-y-4 my-auto py-6">
+      <form onSubmit={handleSubmit} className="space-y-4 my-auto py-6">
         {error && (
-          <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 text-xs flex items-center space-x-2 animate-shake">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="flex items-center space-x-2.5 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+            <AlertCircle className="h-4.5 w-4.5 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[var(--app-text-secondary)] px-1">
-            Tên đăng nhập
+        <div>
+          <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+            Tên tài khoản (Username)
           </label>
-          <div className="relative flex items-center">
-            <UserIcon className="absolute left-4 h-5 w-5 text-[var(--app-muted)] pointer-events-none" />
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted" />
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Nhập username của bạn"
-              disabled={loading}
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[var(--app-surface)] border border-[var(--app-border)] text-base text-[var(--app-text)] placeholder-[var(--app-muted)] focus:outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)] transition-all shadow-xs"
+              placeholder="nhập username"
+              autoCapitalize="none"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-plum-surface border border-purple-primary/10 text-base text-white placeholder-text-muted focus:outline-none focus:border-purple-primary focus:ring-1 focus:ring-purple-primary transition-all"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[var(--app-text-secondary)] px-1">
+        <div>
+          <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
             Mật khẩu
           </label>
-          <div className="relative flex items-center">
-            <KeyRound className="absolute left-4 h-5 w-5 text-[var(--app-muted)] pointer-events-none" />
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted" />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              disabled={loading}
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[var(--app-surface)] border border-[var(--app-border)] text-base text-[var(--app-text)] placeholder-[var(--app-muted)] focus:outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)] transition-all shadow-xs"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-plum-surface border border-purple-primary/10 text-base text-white placeholder-text-muted focus:outline-none focus:border-purple-primary focus:ring-1 focus:ring-purple-primary transition-all"
             />
           </div>
         </div>
@@ -95,21 +88,27 @@ export const LoginScreen: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-4 flex items-center justify-center py-4 rounded-2xl bg-[var(--app-accent)] text-white font-bold text-base shadow-lg hover:opacity-95 active:scale-98 transition-all disabled:opacity-50"
+          className="w-full mt-4 flex items-center justify-center py-4 rounded-2xl bg-gradient-to-r from-purple-primary to-purple-light text-white font-bold text-base shadow-[0_4px_20px_rgba(168,47,208,0.4)] hover:opacity-95 active:scale-98 transition-all disabled:opacity-50"
         >
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <div className="flex items-center space-x-2">
+              <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              <span>Đang kết nối...</span>
+            </div>
           ) : (
-            'Đăng nhập để đọc sách'
+            <div className="flex items-center space-x-2">
+              <span>Đăng nhập vào Tủ sách</span>
+              <ArrowRight className="h-5 w-5" />
+            </div>
           )}
         </button>
       </form>
 
-      {/* Footer Info */}
+      {/* Info note */}
       <div className="pb-4 text-center">
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-muted)] text-xs">
-          <KeyRound className="h-3.5 w-3.5 text-[var(--app-accent)]" />
-          <span>Sử dụng tài khoản Readthrough đã có của bạn</span>
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-plum-surface/40 border border-purple-primary/5 text-text-muted text-xs">
+          <KeyRound className="h-3.5 w-3.5 text-purple-light" />
+          <span>Sử dụng tài khoản từ hệ thống Readthrough</span>
         </div>
       </div>
     </div>

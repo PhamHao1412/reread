@@ -1,10 +1,7 @@
 import React from 'react';
 import { useReader } from '../context/ReaderContext';
 import { ReaderTheme, FontFamily } from '../types';
-import { 
-  X, Sun, Moon, Sparkles, Type, Minus, Plus, 
-  BookOpen, Zap, AlignJustify 
-} from 'lucide-react';
+import { X, Sun, Moon, Sparkles, BookOpen, Zap, Type } from 'lucide-react';
 
 interface ReaderSettingsDrawerProps {
   isOpen: boolean;
@@ -33,10 +30,10 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
   if (!isOpen) return null;
 
   const themes: { id: ReaderTheme; label: string; bg: string; text: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'sepia', label: 'Sepia', bg: '#F7EFE1', text: '#2D2013', icon: Sun },
-    { id: 'light', label: 'Sáng', bg: '#F8FAFC', text: '#0F172A', icon: Sun },
     { id: 'plum', label: 'Plum Dark', bg: '#1A0D1C', text: '#FFFFFF', icon: Sparkles },
+    { id: 'sepia', label: 'Sepia', bg: '#F7EFE1', text: '#2D2013', icon: Sun },
     { id: 'amoled', label: 'AMOLED', bg: '#000000', text: '#FFFFFF', icon: Moon },
+    { id: 'light', label: 'Sáng', bg: '#F8FAFC', text: '#0F172A', icon: Sun },
   ];
 
   const fontFamilies: { id: FontFamily; label: string }[] = [
@@ -50,10 +47,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
       {/* Overlay dismissal */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div
-        className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
-      >
+      <div className="relative w-full max-w-[420px] bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 z-10 max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none">
         {/* Drag handle */}
         <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-5" />
 
@@ -84,7 +78,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
             max={Math.max(totalPages, 1)}
             value={currentPage}
             onChange={(e) => onPageScrub(parseInt(e.target.value, 10))}
-            className="w-full h-2 bg-[var(--app-surface)] rounded-lg appearance-none cursor-pointer accent-[var(--app-accent)]"
+            className="w-full h-2 bg-[var(--app-surface)] rounded-lg appearance-none cursor-pointer accent-purple-primary"
           />
         </div>
 
@@ -98,7 +92,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
               onClick={() => setReadingMode('standard')}
               className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
                 settings.readingMode === 'standard'
-                  ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
+                  ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
                   : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
               }`}
             >
@@ -109,7 +103,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
               onClick={() => setReadingMode('readthrough')}
               className={`flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all ${
                 settings.readingMode === 'readthrough'
-                  ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-lg'
+                  ? 'bg-purple-primary border-purple-primary text-white shadow-lg'
                   : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
               }`}
             >
@@ -122,26 +116,21 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 3. Theme Selector */}
         <div className="mb-6">
           <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
-            Chủ đề màu nền
+            Giao diện màu sắc
           </label>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-4 gap-2">
             {themes.map((t) => {
               const isSelected = settings.theme === t.id;
-              const IconComp = t.icon;
               return (
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id)}
                   style={{ backgroundColor: t.bg, color: t.text }}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all active:scale-95 shadow-sm ${
-                    isSelected ? 'border-[var(--app-accent)] ring-2 ring-[var(--app-accent)]/50' : 'border-[var(--app-border)]'
+                  className={`flex flex-col items-center justify-center py-3 rounded-2xl border transition-all active:scale-95 shadow-sm ${
+                    isSelected ? 'border-[var(--app-accent)] ring-2 ring-[var(--app-accent)]/50' : 'border-black/10 dark:border-white/10'
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <IconComp className="h-4 w-4" />
-                    <span className="text-xs font-bold">{t.label}</span>
-                  </div>
-                  {isSelected && <div className="h-2 w-2 rounded-full bg-[var(--app-accent)]" />}
+                  <span className="text-[11px] font-bold">{t.label}</span>
                 </button>
               );
             })}
@@ -149,55 +138,48 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         </div>
 
         {/* 4. Font Size Controls */}
-        <div className="mb-6 p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] flex items-center justify-between">
-          <div>
-            <span className="block text-xs font-bold text-[var(--app-text)]">Cỡ chữ</span>
-            <span className="text-[11px] text-[var(--app-muted)]">{settings.fontSize}px</span>
-          </div>
-          <div className="flex items-center space-x-2">
+        <div className="mb-6">
+          <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
+            Cỡ chữ văn bản
+          </label>
+          <div className="flex items-center justify-between p-2 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
             <button
               onClick={decreaseFontSize}
-              disabled={settings.fontSize <= 12}
-              className="p-2 rounded-xl bg-[var(--app-surface)] text-[var(--app-text)] disabled:opacity-30 active:scale-90 transition-all border border-[var(--app-border)]"
+              className="px-4 py-2 rounded-xl bg-[var(--app-surface)] text-[var(--app-text)] text-sm font-bold active:scale-95 transition-all shadow-xs"
             >
-              <Minus className="h-4 w-4" />
+              A-
             </button>
-            <span className="w-8 text-center text-sm font-black text-[var(--app-text)]">
-              {settings.fontSize}
+            <span className="text-sm font-black text-[var(--app-text)]">
+              {settings.fontSize}px
             </span>
             <button
               onClick={increaseFontSize}
-              disabled={settings.fontSize >= 28}
-              className="p-2 rounded-xl bg-[var(--app-surface)] text-[var(--app-text)] disabled:opacity-30 active:scale-90 transition-all border border-[var(--app-border)]"
+              className="px-4 py-2 rounded-xl bg-[var(--app-surface)] text-[var(--app-text)] text-sm font-bold active:scale-95 transition-all shadow-xs"
             >
-              <Plus className="h-4 w-4" />
+              A+
             </button>
           </div>
         </div>
 
-        {/* 5. Font Family Selection */}
-        <div className="mb-2">
-          <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider flex items-center">
-            <AlignJustify className="h-3.5 w-3.5 mr-1.5" />
+        {/* 5. Font Family */}
+        <div>
+          <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
             Kiểu phông chữ
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {fontFamilies.map((f) => {
-              const isSelected = settings.fontFamily === f.id;
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setFontFamily(f.id)}
-                  className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
-                    isSelected
-                      ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
-                      : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
+            {fontFamilies.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFontFamily(f.id)}
+                className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                  settings.fontFamily === f.id
+                    ? 'bg-purple-primary border-purple-primary text-white shadow-md'
+                    : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
