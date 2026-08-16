@@ -69,7 +69,7 @@ function tx(
  */
 export async function getCachedBlob(
   bookId: string,
-  etag: string,
+  etag?: string,
 ): Promise<Blob | null> {
   try {
     const db = await openDB();
@@ -78,11 +78,15 @@ export async function getCachedBlob(
     );
     db.close();
 
-    if (!entry) return null;
+    if (!entry || !entry.blob) return null;
 
     const expired = Date.now() - entry.savedAt > TTL_MS;
-    const stale   = entry.etag !== etag;
-    if (expired || stale) return null;
+    if (expired) return null;
+
+    // Validate etag (matches if exact or belongs to the same book ID)
+    if (etag && entry.etag && entry.etag !== etag && !entry.etag.startsWith(bookId)) {
+      return null;
+    }
 
     return entry.blob;
   } catch {
@@ -123,7 +127,7 @@ export async function setCachedBlob(
  */
 export async function hasCachedBlob(
   bookId: string,
-  etag: string,
+  etag?: string,
 ): Promise<boolean> {
   try {
     const db = await openDB();
@@ -132,9 +136,15 @@ export async function hasCachedBlob(
     );
     db.close();
 
-    if (!entry) return false;
+    if (!entry || !entry.blob) return false;
     const expired = Date.now() - entry.savedAt > TTL_MS;
-    return !expired && entry.etag === etag;
+    if (expired) return false;
+
+    if (etag && entry.etag && entry.etag !== etag && !entry.etag.startsWith(bookId)) {
+      return false;
+    }
+
+    return true;
   } catch {
     return false;
   }
@@ -205,8 +215,10 @@ async function evictOldEntries(): Promise<void> {
 
 /**
  * Derives a stable etag string from a Book object.
- * Uses updated_at if available, falls back to book id (always re-validates).
+ * Uses book.id which is unique and immutable for each uploaded file.
+ * (Does NOT use updated_at because reading progress syncs update updated_at in DB).
  */
-export function bookEtag(book: { id: string; updated_at?: string }): string {
-  return book.updated_at ? `${book.id}:${book.updated_at}` : book.id;
+export function bookEtag(book: { id: string; created_at?: string }): string {
+  return book.id;
 }
+

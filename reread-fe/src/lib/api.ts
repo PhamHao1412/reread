@@ -149,22 +149,7 @@ class ApiClient {
     // Trigger non-blocking background download to populate IndexedDB
     this.prefetchBookBlob(book);
 
-    // Try getting direct presigned URL first
-    try {
-      const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
-        `/api/v1/books/${book.id}/download-url`,
-      );
-      if (urlRes?.url && urlRes.is_presigned) {
-        return {
-          url: urlRes.url,
-          isBlob: false,
-        };
-      }
-    } catch {
-      // ignore
-    }
-
-    // Fallback to backend /content endpoint with Authorization header (supports Range requests)
+    // Use backend /content endpoint with Authorization header (fully supports Range requests with CORS)
     const token = this.getAccessToken();
     return {
       url: this.formatUrl(`/api/v1/books/${book.id}/content`),

@@ -44,6 +44,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [translatingWord, setTranslatingWord] = useState<string | null>(null);
 
   const progressTimerRef = useRef<any>(null);
+  const loadingTaskRef = useRef<any>(null);
 
   // 1. Fetch book content blob, load PDF document, and extract Table of Contents
   useEffect(() => {
@@ -70,17 +71,40 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           localUrl = source.url;
         }
 
-        const doc = await pdfjsLib.getDocument({
-          url: source.url,
-          httpHeaders: source.headers,
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-          cMapPacked: true,
-          rangeChunkSize: 65536,
-          disableAutoFetch: false,
-          disableStream: false,
-        }).promise;
+        let doc: any = null;
 
-        if (!active) return;
+        // Stage 1: Try instant stream (Range request)
+        try {
+          const loadingTask = pdfjsLib.getDocument({
+            url: source.url,
+            httpHeaders: source.headers,
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+            cMapPacked: true,
+            rangeChunkSize: 65536,
+            disableAutoFetch: false,
+            disableStream: false,
+          });
+          loadingTaskRef.current = loadingTask;
+          doc = await loadingTask.promise;
+        } catch (streamErr) {
+          if (!active) return;
+          console.warn('[Reader] Range stream failed, falling back to full blob fetch:', streamErr);
+
+          // Stage 2: Fallback to full blob download via authenticated API client
+          const blobUrl = await api.getBookFileBlobUrl(book);
+          if (!active) return;
+          localUrl = blobUrl;
+
+          const fallbackTask = pdfjsLib.getDocument({
+            url: blobUrl,
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+            cMapPacked: true,
+          });
+          loadingTaskRef.current = fallbackTask;
+          doc = await fallbackTask.promise;
+        }
+
+        if (!active || !doc) return;
         setPdfDoc(doc);
         setTotalPages(doc.numPages);
 
@@ -100,6 +124,14 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
 
     return () => {
       active = false;
+      if (loadingTaskRef.current) {
+        try {
+          loadingTaskRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        loadingTaskRef.current = null;
+      }
       if (localUrl) {
         URL.revokeObjectURL(localUrl);
       }
