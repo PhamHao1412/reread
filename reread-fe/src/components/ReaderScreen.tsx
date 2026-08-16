@@ -108,11 +108,6 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         if (!active || !doc) return;
         setPdfDoc(doc);
         setTotalPages(doc.numPages);
-
-        // Extract Table of Contents
-        extractTableOfContents(doc).then((items) => {
-          if (active) setTocItems(items);
-        });
       } catch (err: any) {
         if (!active) return;
         setLoadError(err.message || 'Không thể tải nội dung cuốn sách.');
@@ -138,6 +133,16 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       }
     };
   }, [book.id]);
+
+  // Extract Table of Contents lazily ONLY when user opens the TOC drawer
+  // (Prevents firing 95+ sequential network Range requests during initial book open)
+  useEffect(() => {
+    if (showTocDrawer && pdfDoc && tocItems.length === 0) {
+      extractTableOfContents(pdfDoc).then((items) => {
+        setTocItems(items);
+      }).catch(() => {});
+    }
+  }, [showTocDrawer, pdfDoc, tocItems.length]);
 
   // 2. Extract structured text and page image snapshot whenever page changes
   const extractPageData = useCallback(async (doc: any, pageNum: number) => {
