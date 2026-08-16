@@ -64,14 +64,20 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       }
 
       try {
-        const url = await api.getBookFileBlobUrl(book);
+        const source = await api.getPdfDocumentSource(book);
         if (!active) return;
-        localUrl = url;
+        if (source.isBlob) {
+          localUrl = source.url;
+        }
 
         const doc = await pdfjsLib.getDocument({
-          url,
+          url: source.url,
+          httpHeaders: source.headers,
           cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
           cMapPacked: true,
+          rangeChunkSize: 65536,
+          disableAutoFetch: false,
+          disableStream: false,
         }).promise;
 
         if (!active) return;

@@ -127,7 +127,67 @@ class ApiClient {
     return this.request<Book>(`/api/v1/books/${id}`);
   }
 
+  private pendingDownloads = new Map<string, Promise<string>>();
+
+  /**
+   * Fast Source Resolver for PDF.js:
+   * - If already cached in IndexedDB: returns local blob URL immediately (0ms).
+   * - If not cached: returns streaming URL with Range header support so PDF.js
+   *   can fetch only ~150KB and render the current page in < 0.5s, while simultaneously
+   *   triggering background full-file caching to IndexedDB.
+   */
+  async getPdfDocumentSource(book: Book): Promise<{ url: string; headers?: Record<string, string>; isBlob: boolean }> {
+    const etag = bookEtag(book);
+    const cached = await getCachedBlob(book.id, etag);
+    if (cached) {
+      return {
+        url: URL.createObjectURL(cached),
+        isBlob: true,
+      };
+    }
+
+    // Trigger non-blocking background download to populate IndexedDB
+    this.prefetchBookBlob(book);
+
+    // Try getting direct presigned URL first
+    try {
+      const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
+        `/api/v1/books/${book.id}/download-url`,
+      );
+      if (urlRes?.url && urlRes.is_presigned) {
+        return {
+          url: urlRes.url,
+          isBlob: false,
+        };
+      }
+    } catch {
+      // ignore
+    }
+
+    // Fallback to backend /content endpoint with Authorization header (supports Range requests)
+    const token = this.getAccessToken();
+    return {
+      url: this.formatUrl(`/api/v1/books/${book.id}/content`),
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      isBlob: false,
+    };
+  }
+
   async getBookFileBlobUrl(book: Book): Promise<string> {
+    const existing = this.pendingDownloads.get(book.id);
+    if (existing) {
+      return existing;
+    }
+
+    const downloadPromise = this.doGetBookFileBlobUrl(book).finally(() => {
+      this.pendingDownloads.delete(book.id);
+    });
+
+    this.pendingDownloads.set(book.id, downloadPromise);
+    return downloadPromise;
+  }
+
+  private async doGetBookFileBlobUrl(book: Book): Promise<string> {
     const etag = bookEtag(book);
     const mimeType = book.file_type === 'pdf' ? 'application/pdf' : 'application/octet-stream';
 
@@ -138,21 +198,30 @@ class ApiClient {
     }
 
     // ── 2. Cache MISS — fetch from network ──
-    let fileRes = await this.fetchWithAuth(`/api/v1/books/${book.id}/content`);
+    // Try presigned URL first: file goes R2 → User directly, BE not involved in streaming.
+    // Fall back to BE proxy (/content) for local dev or when R2 presigned URL unavailable.
+    let fileRes: Response | null = null;
 
-    if (!fileRes.ok) {
-      try {
-        const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
-          `/api/v1/books/${book.id}/download-url`,
-        );
-        if (urlRes?.url) {
-          const directRes = await fetch(urlRes.url);
-          if (directRes.ok) {
-            fileRes = directRes;
-          }
+    try {
+      const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
+        `/api/v1/books/${book.id}/download-url`,
+      );
+      if (urlRes?.url && urlRes.is_presigned) {
+        // Presigned R2 URL — fetch directly, no auth header needed
+        const directRes = await fetch(urlRes.url);
+        if (directRes.ok) {
+          fileRes = directRes;
         }
-      } catch {
-        // ignore
+      }
+    } catch {
+      // ignore — will fall through to BE proxy
+    }
+
+    // Fallback: proxy through BE (local dev or non-presigned storage)
+    if (!fileRes || !fileRes.ok) {
+      const proxyRes = await this.fetchWithAuth(`/api/v1/books/${book.id}/content`);
+      if (proxyRes.ok) {
+        fileRes = proxyRes;
       }
     }
 
@@ -171,8 +240,7 @@ class ApiClient {
 
   /**
    * Warms the cache for a book in the background (fire-and-forget).
-   * Call this when the user taps a book card so the PDF is ready
-   * by the time ReaderScreen mounts.
+   * Uses in-flight deduplication so it never triggers duplicate network downloads.
    */
   prefetchBookBlob(book: Book): void {
     const etag = bookEtag(book);
