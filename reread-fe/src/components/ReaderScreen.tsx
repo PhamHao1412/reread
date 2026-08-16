@@ -43,16 +43,18 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [translatingWord, setTranslatingWord] = useState<string | null>(null);
 
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const progressTimerRef = useRef<any>(null);
   const loadingTaskRef = useRef<any>(null);
 
-  // 1. Fetch book content blob, load PDF document, and extract Table of Contents
+  // 1. Fetch book content blob, load PDF document
   useEffect(() => {
     let active = true;
     let localUrl = '';
 
     const loadBookContent = async () => {
       setLoadError('');
+      setDownloadProgress(0);
 
       // Check cache first — if hit, skip spinner entirely
       const etag = bookEtag(book);
@@ -65,45 +67,20 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       }
 
       try {
-        const source = await api.getPdfDocumentSource(book);
+        // Fast direct 1-stream download from Cloudflare R2 with progress tracking
+        const blobUrl = await api.getBookFileBlobUrl(book, (pct) => {
+          if (active) setDownloadProgress(pct);
+        });
         if (!active) return;
-        if (source.isBlob) {
-          localUrl = source.url;
-        }
+        localUrl = blobUrl;
 
-        let doc: any = null;
-
-        // Stage 1: Try instant stream (Range request)
-        try {
-          const loadingTask = pdfjsLib.getDocument({
-            url: source.url,
-            httpHeaders: source.headers,
-            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-            cMapPacked: true,
-            rangeChunkSize: 65536,
-            disableAutoFetch: !source.isBlob, // NEVER download 600 pages upfront on network stream!
-            disableStream: !source.isBlob,
-            disableRange: false,
-          });
-          loadingTaskRef.current = loadingTask;
-          doc = await loadingTask.promise;
-        } catch (streamErr) {
-          if (!active) return;
-          console.warn('[Reader] Range stream failed, falling back to full blob fetch:', streamErr);
-
-          // Stage 2: Fallback to full blob download via authenticated API client
-          const blobUrl = await api.getBookFileBlobUrl(book);
-          if (!active) return;
-          localUrl = blobUrl;
-
-          const fallbackTask = pdfjsLib.getDocument({
-            url: blobUrl,
-            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-            cMapPacked: true,
-          });
-          loadingTaskRef.current = fallbackTask;
-          doc = await fallbackTask.promise;
-        }
+        const loadingTask = pdfjsLib.getDocument({
+          url: blobUrl,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          cMapPacked: true,
+        });
+        loadingTaskRef.current = loadingTask;
+        const doc = await loadingTask.promise;
 
         if (!active || !doc) return;
         setPdfDoc(doc);
@@ -280,8 +257,16 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
             <Loader2 className="h-9 w-9 animate-spin" style={{ color: 'var(--app-accent)' }} />
             <p className="text-sm font-bold text-[var(--app-text)]">Đang tải sách vào bộ nhớ di động...</p>
+            {downloadProgress > 0 && (
+              <div className="w-48 bg-[var(--app-border)] rounded-full h-1.5 overflow-hidden my-1">
+                <div
+                  className="h-full bg-[var(--app-accent)] transition-all duration-150 rounded-full"
+                  style={{ width: `${downloadProgress}%` }}
+                />
+              </div>
+            )}
             <p className="text-xs text-[var(--app-muted)] max-w-[240px]">
-              Đang kết nối để nạp dữ liệu cuốn sách
+              {downloadProgress > 0 ? `Đã nạp ${downloadProgress}% dữ liệu sách` : 'Đang kết nối để nạp dữ liệu cuốn sách'}
             </p>
           </div>
         ) : loadError ? (

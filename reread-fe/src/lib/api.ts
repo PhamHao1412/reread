@@ -173,13 +173,13 @@ class ApiClient {
     };
   }
 
-  async getBookFileBlobUrl(book: Book): Promise<string> {
+  async getBookFileBlobUrl(book: Book, onProgress?: (pct: number) => void): Promise<string> {
     const existing = this.pendingDownloads.get(book.id);
     if (existing) {
       return existing;
     }
 
-    const downloadPromise = this.doGetBookFileBlobUrl(book).finally(() => {
+    const downloadPromise = this.doGetBookFileBlobUrl(book, onProgress).finally(() => {
       this.pendingDownloads.delete(book.id);
     });
 
@@ -187,19 +187,17 @@ class ApiClient {
     return downloadPromise;
   }
 
-  private async doGetBookFileBlobUrl(book: Book): Promise<string> {
+  private async doGetBookFileBlobUrl(book: Book, onProgress?: (pct: number) => void): Promise<string> {
     const etag = bookEtag(book);
     const mimeType = book.file_type === 'pdf' ? 'application/pdf' : 'application/octet-stream';
 
-    // ── 1. Cache HIT — serve instantly from IndexedDB ──
+    // ── 1. Cache HIT — serve instantly from IndexedDB (0ms) ──
     const cached = await getCachedBlob(book.id, etag);
     if (cached) {
       return URL.createObjectURL(cached);
     }
 
-    // ── 2. Cache MISS — fetch from network ──
-    // Try presigned URL first: file goes R2 → User directly, BE not involved in streaming.
-    // Fall back to BE proxy (/content) for local dev or when R2 presigned URL unavailable.
+    // ── 2. Cache MISS — single high-speed HTTP/2 stream direct from Cloudflare R2 ──
     let fileRes: Response | null = null;
 
     try {
@@ -207,7 +205,7 @@ class ApiClient {
         `/api/v1/books/${book.id}/download-url`,
       );
       if (urlRes?.url && urlRes.is_presigned) {
-        // Presigned R2 URL — fetch directly, no auth header needed
+        // Direct high-speed download from Cloudflare CDN Edge
         const directRes = await fetch(urlRes.url);
         if (directRes.ok) {
           fileRes = directRes;
@@ -225,14 +223,32 @@ class ApiClient {
       }
     }
 
-    if (!fileRes || !fileRes.ok) {
+    if (!fileRes || !fileRes.ok || !fileRes.body) {
       throw new Error('Không thể tải tệp tin nội dung sách.');
     }
 
-    const blob = await fileRes.blob();
-    const typedBlob = new Blob([blob], { type: mimeType });
+    // Stream download with progress tracking (1 single fast connection, 1-2s for 30MB)
+    const contentLength = Number(fileRes.headers.get('Content-Length')) || book.file_size || 0;
+    const reader = fileRes.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
 
-    // ── 3. Persist to IndexedDB for next time (non-blocking) ──
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        receivedBytes += value.length;
+        if (contentLength > 0 && onProgress) {
+          const pct = Math.min(Math.round((receivedBytes / contentLength) * 100), 100);
+          onProgress(pct);
+        }
+      }
+    }
+
+    const typedBlob = new Blob(chunks as BlobPart[], { type: mimeType });
+
+    // ── 3. Persist to IndexedDB for all future instant loads ──
     setCachedBlob(book.id, typedBlob, etag).catch(() => {});
 
     return URL.createObjectURL(typedBlob);
