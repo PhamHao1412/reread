@@ -1,4 +1,5 @@
 import { Book, User, Bookmark, TranslationData } from '../types';
+import { getCachedBlob, setCachedBlob, bookEtag } from './bookCache';
 
 class ApiClient {
   private accessKey = 'readthrough_access_token';
@@ -127,11 +128,23 @@ class ApiClient {
   }
 
   async getBookFileBlobUrl(book: Book): Promise<string> {
+    const etag = bookEtag(book);
+    const mimeType = book.file_type === 'pdf' ? 'application/pdf' : 'application/octet-stream';
+
+    // ── 1. Cache HIT — serve instantly from IndexedDB ──
+    const cached = await getCachedBlob(book.id, etag);
+    if (cached) {
+      return URL.createObjectURL(cached);
+    }
+
+    // ── 2. Cache MISS — fetch from network ──
     let fileRes = await this.fetchWithAuth(`/api/v1/books/${book.id}/content`);
-    
+
     if (!fileRes.ok) {
       try {
-        const urlRes = await this.request<{ url: string; is_presigned: boolean }>(`/api/v1/books/${book.id}/download-url`);
+        const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
+          `/api/v1/books/${book.id}/download-url`,
+        );
         if (urlRes?.url) {
           const directRes = await fetch(urlRes.url);
           if (directRes.ok) {
@@ -147,9 +160,28 @@ class ApiClient {
       throw new Error('Không thể tải tệp tin nội dung sách.');
     }
 
-    const mimeType = book.file_type === 'pdf' ? 'application/pdf' : 'application/octet-stream';
     const blob = await fileRes.blob();
-    return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+    const typedBlob = new Blob([blob], { type: mimeType });
+
+    // ── 3. Persist to IndexedDB for next time (non-blocking) ──
+    setCachedBlob(book.id, typedBlob, etag).catch(() => {});
+
+    return URL.createObjectURL(typedBlob);
+  }
+
+  /**
+   * Warms the cache for a book in the background (fire-and-forget).
+   * Call this when the user taps a book card so the PDF is ready
+   * by the time ReaderScreen mounts.
+   */
+  prefetchBookBlob(book: Book): void {
+    const etag = bookEtag(book);
+    getCachedBlob(book.id, etag).then((cached) => {
+      if (!cached) {
+        // Not cached yet — fetch silently in background
+        this.getBookFileBlobUrl(book).catch(() => {});
+      }
+    }).catch(() => {});
   }
 
   async updateProgress(bookId: string, page: number, totalPages: number): Promise<void> {

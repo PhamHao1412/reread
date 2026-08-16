@@ -7,6 +7,7 @@ import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
 import { TableOfContentsDrawer } from './TableOfContentsDrawer';
 import { MobileTranslationSheet } from './MobileTranslationSheet';
 import { api } from '../lib/api';
+import { hasCachedBlob, bookEtag } from '../lib/bookCache';
 import { extractStructuredTextFromPageItems } from '../lib/pdfTextExtractor';
 import { extractTableOfContents, TocItem } from '../lib/pdfToc';
 import { renderPageToDataUrl } from '../lib/pageRenderer';
@@ -29,8 +30,10 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [currentPage, setCurrentPage] = useState<number>(book.current_page || 1);
   const [totalPages, setTotalPages] = useState<number>(book.total_pages || 1);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  // Start as non-loading if we know the blob is cached (will be confirmed async)
   const [loadingFile, setLoadingFile] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>('');
+  const isCacheWarmRef = useRef<boolean>(false);
   const [extractedText, setExtractedText] = useState<string>('');
   const [pageImageUrl, setPageImageUrl] = useState<string>('');
   const [showControls, setShowControls] = useState<boolean>(true);
@@ -48,8 +51,18 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
     let localUrl = '';
 
     const loadBookContent = async () => {
-      setLoadingFile(true);
       setLoadError('');
+
+      // Check cache first — if hit, skip spinner entirely
+      const etag = bookEtag(book);
+      const cached = await hasCachedBlob(book.id, etag);
+      if (active && cached) {
+        isCacheWarmRef.current = true;
+        setLoadingFile(false); // ← instant: hide spinner before fetch
+      } else {
+        setLoadingFile(true);
+      }
+
       try {
         const url = await api.getBookFileBlobUrl(book);
         if (!active) return;

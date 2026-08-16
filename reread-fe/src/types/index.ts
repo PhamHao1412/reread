@@ -23,6 +23,7 @@ export interface Book {
   epub_cfi?: string;
   last_read_at?: string;
   created_at: string;
+  updated_at?: string;
   upload_status?: string;
 }
 

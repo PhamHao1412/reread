@@ -7,6 +7,7 @@ import { ReaderScreen } from './components/ReaderScreen';
 import { BookmarksScreen } from './components/BookmarksScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { Book } from './types';
+import { api } from './lib/api';
 import { BookOpen } from 'lucide-react';
 
 export function App() {
@@ -64,11 +65,21 @@ export function App() {
       showNav={true}
     >
       {currentTab === 'library' && (
-        <LibraryScreen onSelectBook={(book) => setActiveBook(book)} />
+        <LibraryScreen
+          onSelectBook={(book) => {
+            api.prefetchBookBlob(book); // warm cache during navigation transition
+            setActiveBook(book);
+          }}
+        />
       )}
 
       {currentTab === 'reading' && (
-        <LibraryScreen onSelectBook={(book) => setActiveBook(book)} />
+        <LibraryScreen
+          onSelectBook={(book) => {
+            api.prefetchBookBlob(book);
+            setActiveBook(book);
+          }}
+        />
       )}
 
       {currentTab === 'bookmarks' && (
