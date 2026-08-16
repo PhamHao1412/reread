@@ -81,8 +81,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
             cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
             cMapPacked: true,
             rangeChunkSize: 65536,
-            disableAutoFetch: false,
-            disableStream: false,
+            disableAutoFetch: !source.isBlob, // NEVER download 600 pages upfront on network stream!
+            disableStream: !source.isBlob,
+            disableRange: false,
           });
           loadingTaskRef.current = loadingTask;
           doc = await loadingTask.promise;

@@ -149,7 +149,22 @@ class ApiClient {
     // Trigger non-blocking background download to populate IndexedDB
     this.prefetchBookBlob(book);
 
-    // Use backend /content endpoint with Authorization header (fully supports Range requests with CORS)
+    // 1. Try direct Cloudflare R2 presigned URL (fast Cloudflare CDN edge network)
+    try {
+      const urlRes = await this.request<{ url: string; is_presigned: boolean }>(
+        `/api/v1/books/${book.id}/download-url`,
+      );
+      if (urlRes?.url && urlRes.is_presigned) {
+        return {
+          url: urlRes.url,
+          isBlob: false,
+        };
+      }
+    } catch {
+      // ignore — fall through to backend proxy
+    }
+
+    // 2. Fallback to backend /content endpoint with Authorization header
     const token = this.getAccessToken();
     return {
       url: this.formatUrl(`/api/v1/books/${book.id}/content`),
