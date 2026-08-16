@@ -130,14 +130,18 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       const structured = extractStructuredTextFromPageItems(textContent.items);
       setExtractedText(structured);
 
-      // Generate page image snapshot for diagrams and figures
-      const imgUrl = await renderPageToDataUrl(page, 900);
-      setPageImageUrl(imgUrl);
+      // Generate page image snapshot only when needed in readthrough mode
+      if (settings.readingMode === 'readthrough') {
+        const imgUrl = await renderPageToDataUrl(page, 900);
+        setPageImageUrl(imgUrl);
+      } else {
+        setPageImageUrl('');
+      }
     } catch {
       setExtractedText('');
       setPageImageUrl('');
     }
-  }, []);
+  }, [settings.readingMode]);
 
   useEffect(() => {
     if (pdfDoc) {

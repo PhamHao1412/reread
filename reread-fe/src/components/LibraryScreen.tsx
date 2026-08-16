@@ -19,7 +19,14 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
     setError('');
     try {
       const data = await api.getBooks();
-      setBooks(data || []);
+      const list = data || [];
+      setBooks(list);
+
+      // Auto-prefetch top active book into IndexedDB while user is in library
+      if (list.length > 0) {
+        const activeBook = list.find((b) => (b.current_page || 0) > 1) || list[0];
+        api.prefetchBookBlob(activeBook);
+      }
     } catch (err: any) {
       setError(err.message || 'Không thể tải danh sách sách.');
     } finally {
