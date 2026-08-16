@@ -162,7 +162,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
 
   // Double-tap to zoom in/out
   const lastTapRef = useRef(0);
-  const handleDoubleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleDoubleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       if (lastScaleRef.current > 1) {

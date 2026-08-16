@@ -36,7 +36,7 @@ export function convertToReadableText(text: string): string {
       if (isCodeLine) {
         const words = trimmed.split(' ');
         const wrappedWords = words.map((w) => formatWordElement(w));
-        return `<div class="p-3 my-3 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] font-mono text-[13px] text-orange-warm/90 overflow-x-auto select-text whitespace-pre-wrap">${wrappedWords.join(' ')}</div>`;
+        return `<div class="my-3 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] overflow-hidden max-w-full"><div class="overflow-x-auto overscroll-x-contain no-scrollbar"><pre class="p-3 font-mono text-[13px] text-orange-warn whitespace-pre select-text m-0" style="color:var(--app-accent);display:block;min-width:max-content">${wrappedWords.join(' ')}</pre></div></div>`;
       }
 
       const words = trimmed.split(' ');

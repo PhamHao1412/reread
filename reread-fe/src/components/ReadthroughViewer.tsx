@@ -300,11 +300,12 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full h-full overflow-y-auto no-scrollbar px-6 py-6 select-none"
+      className="w-full h-full overflow-y-auto overflow-x-hidden no-scrollbar px-6 py-6 select-none"
       style={{
         fontSize: `${settings.fontSize}px`,
         lineHeight: settings.lineHeight,
         WebkitTouchCallout: 'none',
+        overscrollBehaviorX: 'none',
       }}
     >
       {/* Top Header Pill & Visual Diagram Toggle Button */}
