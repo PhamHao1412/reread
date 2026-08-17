@@ -41,7 +41,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [showTocDrawer, setShowTocDrawer] = useState<boolean>(false);
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
-  const [translatingWord, setTranslatingWord] = useState<string | null>(null);
+  const [translatingTarget, setTranslatingTarget] = useState<{ word: string; contextSentence?: string } | null>(null);
 
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const progressTimerRef = useRef<any>(null);
@@ -314,9 +314,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
               settings={settings}
               currentPage={currentPage}
               totalPages={totalPages}
-              activeWord={translatingWord}
+              activeWord={translatingTarget?.word}
               onPageChange={handlePageChange}
-              onTranslateWord={(word) => setTranslatingWord(word)}
+              onTranslateWord={(word, contextSentence) => setTranslatingTarget({ word, contextSentence })}
               onTap={toggleControls}
             />
           )
@@ -392,12 +392,16 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         onPageScrub={(page) => handlePageChange(page, totalPages)}
       />
 
-      {/* 6. Mobile Instant Translation Bottom Sheet */}
-      {translatingWord && (
+      {/* 6. Mobile Instant Translation Bottom Sheet with AI Explain */}
+      {translatingTarget && (
         <MobileTranslationSheet
-          word={translatingWord}
+          word={translatingTarget.word}
           bookId={book.id}
-          onClose={() => setTranslatingWord(null)}
+          bookTitle={book.title}
+          bookAuthor={book.author}
+          pageNumber={currentPage}
+          contextSentence={translatingTarget.contextSentence}
+          onClose={() => setTranslatingTarget(null)}
         />
       )}
     </div>

@@ -13,7 +13,7 @@ interface ReadthroughViewerProps {
   totalPages: number;
   activeWord?: string | null;
   onPageChange: (page: number, totalPages: number) => void;
-  onTranslateWord: (word: string) => void;
+  onTranslateWord: (word: string, contextSentence?: string) => void;
   onTap: () => void;
 }
 
@@ -118,6 +118,19 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     // No word translation on single click
   };
 
+  // Helper to extract full sentence containing the word for AI context
+  const findContextSentence = (fullText: string, searchWord: string): string => {
+    if (!fullText || !searchWord) return '';
+    const cleanWord = searchWord.trim().toLowerCase();
+    const sentences = fullText.split(/(?<=[.?!])\s+/);
+    for (const sentence of sentences) {
+      if (sentence.toLowerCase().includes(cleanWord)) {
+        return sentence.trim();
+      }
+    }
+    return '';
+  };
+
   // Double click -> translate word (desktop equivalent of mobile long-press)
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -130,7 +143,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
     window.getSelection()?.removeAllRanges();
 
     if (word) {
-      onTranslateWord(word);
+      onTranslateWord(word, findContextSentence(text, word));
     }
   };
 
@@ -167,8 +180,8 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
             // ignore
           }
 
-          // Open translation sheet
-          onTranslateWord(word);
+          // Open translation sheet with sentence context
+          onTranslateWord(word, findContextSentence(text, word));
         }, 380);
       }
     }

@@ -286,6 +286,79 @@ class ApiClient {
     });
   }
 
+  // AI Contextual Explanation (SSE Streaming)
+  async explainStream(
+    params: {
+      text: string;
+      context_sentence?: string;
+      book_title?: string;
+      book_author?: string;
+      page_number?: number;
+    },
+    onChunk: (chunk: string) => void,
+    onDone: () => void,
+    onError: (err: Error) => void,
+  ): Promise<() => void> {
+    const controller = new AbortController();
+    const token = this.getAccessToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch(this.formatUrl('/api/v1/explain'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || 'Không thể kết nối với dịch vụ AI Explain.');
+        }
+        if (!res.body) {
+          throw new Error('Không nhận được luồng dữ liệu từ AI.');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data:')) {
+              try {
+                const parsed = JSON.parse(trimmed.slice(5).trim());
+                if (parsed.content) {
+                  onChunk(parsed.content);
+                }
+              } catch {
+                // ignore parse error on incomplete chunks
+              }
+            }
+          }
+        }
+        onDone();
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          onError(err);
+        }
+      });
+
+    return () => controller.abort();
+  }
+
   // Vocabulary Notebook
   async saveVocabulary(data: {
     book_id: string;
