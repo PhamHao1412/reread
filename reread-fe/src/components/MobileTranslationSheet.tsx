@@ -51,7 +51,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
 
   // Auto-scroll tracking for AI Explain stream
   const sheetContainerRef = useRef<HTMLDivElement | null>(null);
-  const isUserScrolledUpRef = useRef<boolean>(false);
+  const explainBottomRef = useRef<HTMLDivElement | null>(null);
 
   // Protection against synthetic click events from long-press/touch release
   const mountTimeRef = useRef<number>(Date.now());
@@ -61,32 +61,18 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
     mountTimeRef.current = Date.now();
     backdropPointerDownRef.current = false;
     hasExplainedRef.current = false;
-    isUserScrolledUpRef.current = false;
     setExplanation('');
     setExplainState('idle');
     setExplainError('');
   }, [word]);
 
-  const handleContainerScroll = () => {
-    if (!sheetContainerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = sheetContainerRef.current;
-    // If distance from bottom is more than 100px, user is deliberately reading above
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    isUserScrolledUpRef.current = !isNearBottom;
-  };
-
-  // Auto-scroll to latest generated text smoothly
+  // Continuously follow the stream to the newest generated text
   useEffect(() => {
-    if (activeTab === 'explain' && explainState === 'streaming' && sheetContainerRef.current) {
-      if (!isUserScrolledUpRef.current) {
-        requestAnimationFrame(() => {
-          if (sheetContainerRef.current) {
-            sheetContainerRef.current.scrollTo({
-              top: sheetContainerRef.current.scrollHeight,
-              behavior: 'smooth',
-            });
-          }
-        });
+    if (activeTab === 'explain' && explainState === 'streaming') {
+      if (explainBottomRef.current) {
+        explainBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      } else if (sheetContainerRef.current) {
+        sheetContainerRef.current.scrollTop = sheetContainerRef.current.scrollHeight;
       }
     }
   }, [explanation, activeTab, explainState]);
@@ -246,7 +232,6 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
 
       <div
         ref={sheetContainerRef}
-        onScroll={handleContainerScroll}
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none flex flex-col"
       >
@@ -456,6 +441,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
 
                   <div className="text-xs text-[var(--app-text)] leading-relaxed space-y-2">
                     {renderMarkdown(explanation)}
+                    <div ref={explainBottomRef} className="h-4" />
                   </div>
                 </div>
 
