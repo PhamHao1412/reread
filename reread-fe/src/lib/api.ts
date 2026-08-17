@@ -376,6 +376,10 @@ class ApiClient {
   }
 
   // Bookmarks
+  async getAllBookmarks(): Promise<Bookmark[]> {
+    return this.request<Bookmark[]>(`/api/v1/bookmarks`).catch(() => []);
+  }
+
   async getBookmarks(bookId: string): Promise<Bookmark[]> {
     return this.request<Bookmark[]>(`/api/v1/books/${bookId}/bookmarks`).catch(() => []);
   }

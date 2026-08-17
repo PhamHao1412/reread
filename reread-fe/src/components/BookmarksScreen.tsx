@@ -15,20 +15,31 @@ export const BookmarksScreen: React.FC<BookmarksScreenProps> = ({ onOpenBookAtPa
     setLoading(true);
     try {
       const books = await api.getBooks();
-      const allBookmarksList: (Bookmark & { book?: Book })[] = [];
+      const bookMap = new Map<string, Book>();
+      books.forEach((b) => bookMap.set(b.id, b));
 
-      for (const book of books) {
-        try {
-          const bms = await api.getBookmarks(book.id);
-          bms.forEach((bm) => {
-            allBookmarksList.push({ ...bm, book });
-          });
-        } catch {
-          // ignore individual book failures
+      const allBms = await api.getAllBookmarks().catch(() => []);
+      if (allBms && allBms.length > 0) {
+        const enriched = allBms.map((bm) => ({
+          ...bm,
+          book: bookMap.get(bm.book_id),
+        }));
+        setBookmarks(enriched);
+      } else {
+        // Fallback per-book fetch
+        const allBookmarksList: (Bookmark & { book?: Book })[] = [];
+        for (const book of books) {
+          try {
+            const bms = await api.getBookmarks(book.id);
+            bms.forEach((bm) => {
+              allBookmarksList.push({ ...bm, book });
+            });
+          } catch {
+            // ignore individual book failures
+          }
         }
+        setBookmarks(allBookmarksList);
       }
-
-      setBookmarks(allBookmarksList);
     } catch {
       setBookmarks([]);
     } finally {

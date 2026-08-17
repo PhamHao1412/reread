@@ -40,12 +40,28 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [showTocDrawer, setShowTocDrawer] = useState<boolean>(false);
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [bookmarkedPages, setBookmarkedPages] = useState<Map<number, string>>(new Map());
   const [translatingTarget, setTranslatingTarget] = useState<{ word: string; contextSentence?: string } | null>(null);
 
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const progressTimerRef = useRef<any>(null);
   const loadingTaskRef = useRef<any>(null);
+
+  // Fetch existing bookmarks for this book
+  useEffect(() => {
+    let isMounted = true;
+    api.getBookmarks(book.id).then((bms) => {
+      if (!isMounted || !Array.isArray(bms)) return;
+      const map = new Map<number, string>();
+      bms.forEach((b) => map.set(b.page_number, b.id));
+      setBookmarkedPages(map);
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [book.id]);
+
+  const isBookmarked = bookmarkedPages.has(currentPage);
 
   // 1. Fetch book content blob, load PDF document
   useEffect(() => {
@@ -181,9 +197,36 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   };
 
   const toggleBookmark = async () => {
-    setIsBookmarked(!isBookmarked);
-    if (!isBookmarked) {
-      await api.addBookmark(book.id, currentPage, `Trang ${currentPage} - ${book.title}`).catch(() => {});
+    const page = currentPage;
+    const existingId = bookmarkedPages.get(page);
+    if (existingId) {
+      // Remove bookmark optimistically
+      setBookmarkedPages((prev) => {
+        const next = new Map(prev);
+        next.delete(page);
+        return next;
+      });
+      await api.removeBookmark(book.id, existingId).catch(() => {});
+    } else {
+      // Add bookmark optimistically
+      const tempId = `temp-${Date.now()}`;
+      setBookmarkedPages((prev) => {
+        const next = new Map(prev);
+        next.set(page, tempId);
+        return next;
+      });
+      try {
+        const bm = await api.addBookmark(book.id, page, `Trang ${page} - ${book.title}`);
+        if (bm && bm.id) {
+          setBookmarkedPages((prev) => {
+            const next = new Map(prev);
+            next.set(page, bm.id);
+            return next;
+          });
+        }
+      } catch {
+        // keep temp or revert
+      }
     }
   };
 
