@@ -66,13 +66,17 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
     setExplainError('');
   }, [word]);
 
-  // Continuously follow the stream to the newest generated text
+  // Continuously follow the stream to the newest generated text (iOS WebKit & PWA compatible)
   useEffect(() => {
     if (activeTab === 'explain' && explainState === 'streaming') {
-      if (explainBottomRef.current) {
-        explainBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-      } else if (sheetContainerRef.current) {
-        sheetContainerRef.current.scrollTop = sheetContainerRef.current.scrollHeight;
+      const container = sheetContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+        requestAnimationFrame(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        });
       }
     }
   }, [explanation, activeTab, explainState]);
@@ -233,6 +237,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
       <div
         ref={sheetContainerRef}
         onClick={(e) => e.stopPropagation()}
+        style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
         className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none flex flex-col"
       >
         {/* Drag handle */}
