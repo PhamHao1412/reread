@@ -238,29 +238,29 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
         ref={sheetContainerRef}
         onClick={(e) => e.stopPropagation()}
         style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
-        className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none flex flex-col"
+        className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.75rem)] z-10 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up select-none flex flex-col"
       >
         {/* Drag handle */}
         <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-4 shrink-0" />
 
         {/* Header Bar */}
-        <div className="flex justify-between items-start mb-3 shrink-0">
+        <div className="flex justify-between items-start mb-3.5 shrink-0">
           <div className="flex-1 pr-2">
             <div className="flex items-center space-x-2">
-              <h3 className="text-2xl font-black text-[var(--app-text)] tracking-tight">
+              <h3 className="text-2xl sm:text-[26px] font-black text-[var(--app-text)] tracking-tight leading-none">
                 {word}
               </h3>
               <button
                 onClick={playAudio}
                 title="Phát âm"
-                className="p-1.5 rounded-full bg-[var(--app-accent)]/15 hover:bg-[var(--app-accent)]/30 text-[var(--app-accent)] transition-all active:scale-95"
+                className="p-2 rounded-full bg-[var(--app-accent)]/15 hover:bg-[var(--app-accent)]/30 text-[var(--app-accent)] transition-all active:scale-95"
               >
-                <Volume2 className="h-4.5 w-4.5" />
+                <Volume2 className="h-5 w-5" />
               </button>
             </div>
 
             {data?.phonetic && (
-              <span className="inline-block text-xs font-mono text-[var(--app-muted)] font-bold mt-0.5">
+              <span className="inline-block text-[13px] font-mono text-[var(--app-muted)] font-semibold mt-1">
                 {data.phonetic}
               </span>
             )}
@@ -268,7 +268,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-[var(--app-card)] text-[var(--app-muted)] hover:text-[var(--app-text)] transition-all shrink-0"
+            className="p-2 rounded-full bg-[var(--app-card)] text-[var(--app-muted)] hover:text-[var(--app-text)] transition-all shrink-0 active:scale-95"
           >
             <X className="h-5 w-5" />
           </button>
@@ -278,25 +278,25 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
         <div className="grid grid-cols-2 p-1 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] mb-4 shrink-0">
           <button
             onClick={() => setActiveTab('translate')}
-            className={`flex items-center justify-center space-x-2 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center justify-center space-x-2 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
               activeTab === 'translate'
                 ? 'bg-[var(--app-surface)] text-[var(--app-text)] shadow-sm border border-[var(--app-border)]'
                 : 'text-[var(--app-muted)] hover:text-[var(--app-text)]'
             }`}
           >
-            <BookOpen className="h-3.5 w-3.5" />
+            <BookOpen className="h-4 w-4" />
             <span>Dịch nghĩa</span>
           </button>
 
           <button
             onClick={() => setActiveTab('explain')}
-            className={`flex items-center justify-center space-x-2 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center justify-center space-x-2 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
               activeTab === 'explain'
                 ? 'bg-[var(--app-surface)] text-[var(--app-accent)] shadow-sm border border-[var(--app-border)]'
                 : 'text-[var(--app-muted)] hover:text-[var(--app-text)]'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles className="h-4 w-4" />
             <span>AI Explain</span>
           </button>
         </div>
@@ -307,21 +307,21 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10 space-y-3">
                 <Loader2 className="h-8 w-8 text-[var(--app-accent)] animate-spin" />
-                <p className="text-xs text-[var(--app-muted)] font-bold">Đang tra từ...</p>
+                <p className="text-sm text-[var(--app-muted)] font-bold">Đang tra từ...</p>
               </div>
             ) : error ? (
-              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
                 <span className="font-medium">{error}</span>
               </div>
             ) : data ? (
               <div className="space-y-4">
                 {/* Vietnamese Translation Card */}
                 <div className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] shadow-sm">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--app-accent)]">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--app-accent)]">
                     Nghĩa tiếng Việt
                   </span>
-                  <p className="text-xl font-black text-[var(--app-text)] mt-1 leading-snug">
+                  <p className="text-[22px] sm:text-2xl font-black text-[var(--app-text)] mt-1 leading-snug">
                     {data.translatedText}
                   </p>
                 </div>
@@ -329,23 +329,23 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 {/* Dictionary Parts of Speech & Definitions */}
                 {data.partsOfSpeech && data.partsOfSpeech.length > 0 && (
                   <div className="space-y-3">
-                    <span className="text-[11px] font-bold text-[var(--app-muted)] uppercase tracking-wider">
+                    <span className="text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
                       Từ điển chi tiết
                     </span>
                     {data.partsOfSpeech.map((pos, idx) => (
                       <div
                         key={idx}
-                        className="p-3.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2 shadow-xs"
+                        className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2.5 shadow-xs"
                       >
-                        <div className="inline-block px-2 py-0.5 rounded-md bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] text-[10px] font-extrabold uppercase">
+                        <div className="inline-block px-2.5 py-0.5 rounded-md bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] text-xs font-black uppercase">
                           {pos.partOfSpeech}
                         </div>
-                        <ul className="space-y-1.5 pl-1">
+                        <ul className="space-y-2 pl-1">
                           {pos.definitions.map((def, dIdx) => (
-                            <li key={dIdx} className="text-xs text-[var(--app-text-secondary)] leading-relaxed list-disc list-inside">
+                            <li key={dIdx} className="text-[13.5px] sm:text-sm text-[var(--app-text-secondary)] leading-relaxed list-disc list-inside">
                               <span className="text-[var(--app-text)] font-semibold">{def.definition}</span>
                               {def.example && (
-                                <p className="text-[11px] text-[var(--app-muted)] italic pl-4 mt-0.5">
+                                <p className="text-xs text-[var(--app-muted)] italic pl-4 mt-1 leading-relaxed">
                                   "{def.example}"
                                 </p>
                               )}
@@ -362,7 +362,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                   <button
                     onClick={handleSaveVocab}
                     disabled={saved || saving}
-                    className={`w-full flex items-center justify-center space-x-2 py-3 rounded-2xl font-bold text-xs border transition-all active:scale-98 ${
+                    className={`w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl font-bold text-sm border transition-all active:scale-98 ${
                       saved
                         ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
                         : 'btn-accent shadow-lg'
@@ -370,17 +370,17 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                   >
                     {saved ? (
                       <>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-4.5 w-4.5" />
                         <span>Đã lưu vào sổ từ vựng</span>
                       </>
                     ) : saving ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4.5 w-4.5 animate-spin" />
                         <span>Đang lưu...</span>
                       </>
                     ) : (
                       <>
-                        <Bookmark className="h-4 w-4" />
+                        <Bookmark className="h-4.5 w-4.5" />
                         <span>Lưu vào sổ từ vựng</span>
                       </>
                     )}
@@ -397,54 +397,54 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
             {explainState === 'loading' ? (
               <div className="flex flex-col items-center justify-center py-10 space-y-3 text-center">
                 <div className="relative">
-                  <Sparkles className="h-9 w-9 text-[var(--app-accent)] animate-pulse" />
+                  <Sparkles className="h-10 w-10 text-[var(--app-accent)] animate-pulse" />
                   <div className="absolute inset-0 bg-[var(--app-accent)]/20 rounded-full blur-lg" />
                 </div>
-                <p className="text-xs font-bold text-[var(--app-text)]">AI đang phân tích ngữ cảnh...</p>
-                <p className="text-[11px] text-[var(--app-muted)] max-w-[240px]">
+                <p className="text-sm font-bold text-[var(--app-text)]">AI đang phân tích ngữ cảnh...</p>
+                <p className="text-xs text-[var(--app-muted)] max-w-[260px] leading-relaxed">
                   Đang phân tích nghĩa của từ trong câu và cuốn sách này
                 </p>
               </div>
             ) : explainState === 'error' ? (
               <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
                   <span className="font-medium">{explainError}</span>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {/* Context Sentence Preview if available */}
                 {contextSentence && (
-                  <div className="p-3 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--app-muted)]">
+                  <div className="p-3.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--app-muted)]">
                       Ngữ cảnh trong câu
                     </span>
-                    <p className="text-xs italic text-[var(--app-text)] mt-1 leading-relaxed">
+                    <p className="text-[13.5px] italic text-[var(--app-text)] mt-1 leading-relaxed">
                       "{contextSentence}"
                     </p>
                   </div>
                 )}
 
                 {/* AI Explanation Content Box */}
-                <div className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-[var(--app-border)] pb-2 mb-2">
-                    <div className="flex items-center space-x-1.5 text-[var(--app-accent)]">
-                      <Sparkles className="h-4 w-4" />
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-[var(--app-border)] pb-2.5 mb-2">
+                    <div className="flex items-center space-x-2 text-[var(--app-accent)]">
+                      <Sparkles className="h-4.5 w-4.5" />
+                      <span className="text-xs font-black uppercase tracking-wider">
                         Phân tích chuyên sâu từ AI
                       </span>
                     </div>
 
                     {explainState === 'streaming' && (
-                      <span className="flex items-center space-x-1 text-[10px] text-[var(--app-accent)] animate-pulse font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" />
+                      <span className="flex items-center space-x-1.5 text-xs text-[var(--app-accent)] animate-pulse font-bold">
+                        <span className="w-2 h-2 rounded-full bg-[var(--app-accent)]" />
                         <span>Đang viết...</span>
                       </span>
                     )}
                   </div>
 
-                  <div className="text-xs text-[var(--app-text)] leading-relaxed space-y-2">
+                  <div className="text-[14px] sm:text-[15px] text-[var(--app-text)] leading-[1.65] space-y-2.5">
                     {renderMarkdown(explanation)}
                     <div ref={explainBottomRef} className="h-4" />
                   </div>
@@ -455,16 +455,16 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                   <div className="pt-2">
                     <button
                       onClick={handleCopyExplanation}
-                      className="w-full flex items-center justify-center space-x-2 py-3 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] text-xs font-bold text-[var(--app-text)] hover:bg-[var(--app-border)]/40 transition-all active:scale-98 shadow-sm"
+                      className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] text-sm font-bold text-[var(--app-text)] hover:bg-[var(--app-border)]/40 transition-all active:scale-98 shadow-sm"
                     >
                       {copied ? (
                         <>
-                          <Check className="h-4 w-4 text-emerald-500" />
+                          <Check className="h-4.5 w-4.5 text-emerald-500" />
                           <span className="text-emerald-500 font-bold">Đã sao chép</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="h-4 w-4 text-[var(--app-muted)]" />
+                          <Copy className="h-4.5 w-4.5 text-[var(--app-muted)]" />
                           <span>Sao chép</span>
                         </>
                       )}
@@ -486,27 +486,27 @@ function renderMarkdown(md: string) {
   const lines = md.split('\n');
   return lines.map((line, i) => {
     const trimmed = line.trim();
-    if (!trimmed) return <div key={i} className="h-1.5" />;
+    if (!trimmed) return <div key={i} className="h-2" />;
 
     if (trimmed.startsWith('### ')) {
       return (
-        <h4 key={i} className="text-xs font-black text-[var(--app-text)] mt-2.5 mb-1 text-[var(--app-accent)]">
+        <h4 key={i} className="text-[14px] font-black text-[var(--app-text)] mt-3 mb-1 text-[var(--app-accent)]">
           {parseInline(trimmed.slice(4))}
         </h4>
       );
     }
     if (trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
       return (
-        <h3 key={i} className="text-sm font-black text-[var(--app-text)] mt-3 mb-1">
+        <h3 key={i} className="text-[15px] sm:text-base font-black text-[var(--app-text)] mt-3.5 mb-1.5">
           {parseInline(trimmed.replace(/^#+\s*/, ''))}
         </h3>
       );
     }
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       return (
-        <div key={i} className="flex items-start space-x-1.5 my-1 pl-1">
-          <span className="text-[var(--app-accent)] font-black text-xs leading-4">•</span>
-          <p className="text-xs text-[var(--app-text)] leading-relaxed flex-1">
+        <div key={i} className="flex items-start space-x-2 my-1 pl-1">
+          <span className="text-[var(--app-accent)] font-black text-sm leading-5">•</span>
+          <p className="text-[14px] sm:text-[14.5px] text-[var(--app-text)] leading-[1.65] flex-1">
             {parseInline(trimmed.slice(2))}
           </p>
         </div>
@@ -514,14 +514,14 @@ function renderMarkdown(md: string) {
     }
     if (trimmed.startsWith('> ')) {
       return (
-        <blockquote key={i} className="pl-3 border-l-2 border-[var(--app-accent)] italic text-[11px] text-[var(--app-muted)] my-1.5">
+        <blockquote key={i} className="pl-3.5 border-l-2 border-[var(--app-accent)] italic text-[13px] text-[var(--app-muted)] my-2 leading-relaxed">
           {parseInline(trimmed.slice(2))}
         </blockquote>
       );
     }
 
     return (
-      <p key={i} className="text-xs text-[var(--app-text)] leading-relaxed">
+      <p key={i} className="text-[14px] sm:text-[14.5px] text-[var(--app-text)] leading-[1.65]">
         {parseInline(trimmed)}
       </p>
     );
@@ -540,7 +540,7 @@ function parseInline(text: string) {
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
-        <code key={idx} className="px-1.5 py-0.5 rounded bg-[var(--app-surface)] font-mono text-[10px] font-bold text-[var(--app-accent)] border border-[var(--app-border)]">
+        <code key={idx} className="px-1.5 py-0.5 rounded bg-[var(--app-surface)] font-mono text-[12px] font-bold text-[var(--app-accent)] border border-[var(--app-border)]">
           {part.slice(1, -1)}
         </code>
       );
