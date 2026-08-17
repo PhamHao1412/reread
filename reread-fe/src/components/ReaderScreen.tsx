@@ -15,7 +15,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { 
   ArrowLeft, Sliders, Zap, BookOpen, Bookmark, 
-  BookmarkCheck, ChevronLeft, ChevronRight, AlertCircle, Loader2, List 
+  ChevronLeft, ChevronRight, AlertCircle, Loader2, List 
 } from 'lucide-react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -50,10 +50,15 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   // Fetch existing bookmarks for this book
   useEffect(() => {
     let isMounted = true;
-    api.getBookmarks(book.id).then((bms) => {
-      if (!isMounted || !Array.isArray(bms)) return;
+    api.getBookmarks(book.id).then((raw) => {
+      if (!isMounted) return;
+      const bms = Array.isArray(raw) ? raw : (raw as any)?.data || [];
+      if (!Array.isArray(bms)) return;
       const map = new Map<number, string>();
-      bms.forEach((b) => map.set(b.page_number, b.id));
+      bms.forEach((b: any) => {
+        const p = Number(b.page_number ?? b.page ?? b.PageNumber ?? 0);
+        if (p > 0) map.set(p, String(b.id || b.ID || ''));
+      });
       setBookmarkedPages(map);
     }).catch(() => {});
     return () => {
@@ -61,7 +66,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
     };
   }, [book.id]);
 
-  const isBookmarked = bookmarkedPages.has(currentPage);
+  const isBookmarked = bookmarkedPages.has(Number(currentPage));
 
   // 1. Fetch book content blob, load PDF document
   useEffect(() => {
@@ -197,7 +202,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   };
 
   const toggleBookmark = async () => {
-    const page = currentPage;
+    const page = Number(currentPage);
     const existingId = bookmarkedPages.get(page);
     if (existingId) {
       // Remove bookmark optimistically
@@ -216,11 +221,13 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         return next;
       });
       try {
-        const bm = await api.addBookmark(book.id, page, `Trang ${page} - ${book.title}`);
-        if (bm && bm.id) {
+        const res = await api.addBookmark(book.id, page, `Trang ${page} - ${book.title}`);
+        const bm = (res as any)?.data || res;
+        const realId = String(bm?.id || (bm as any)?.ID || '');
+        if (realId) {
           setBookmarkedPages((prev) => {
             const next = new Map(prev);
-            next.set(page, bm.id);
+            next.set(page, realId);
             return next;
           });
         }
@@ -287,17 +294,14 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           {/* Bookmark Button */}
           <button
             onClick={toggleBookmark}
-            className={`p-2 rounded-xl border transition-all ${
+            title={isBookmarked ? 'Bỏ đánh dấu trang' : 'Đánh dấu trang này'}
+            className={`p-2 rounded-xl border transition-all active:scale-95 ${
               isBookmarked
-                ? 'bg-orange-warm/20 border-orange-warm/40 text-orange-warm'
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
                 : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-muted)] hover:text-[var(--app-text)]'
             }`}
           >
-            {isBookmarked ? (
-              <BookmarkCheck className="h-4 w-4" />
-            ) : (
-              <Bookmark className="h-4 w-4" />
-            )}
+            <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
 
           {/* Settings Drawer Button */}
