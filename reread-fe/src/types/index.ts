@@ -7,6 +7,13 @@ export interface User {
 
 export type BookFormat = 'pdf' | 'epub' | 'txt' | 'md';
 
+export interface TocItem {
+  id: string;
+  title: string;
+  pageNumber: number;
+  level: number;
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -21,6 +28,7 @@ export interface Book {
   file_url?: string;
   file_size?: number;
   epub_cfi?: string;
+  toc?: string | TocItem[];
   last_read_at?: string;
   created_at: string;
   updated_at?: string;

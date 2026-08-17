@@ -111,15 +111,27 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
     };
   }, [book.id]);
 
-  // Extract Table of Contents lazily ONLY when user opens the TOC drawer
-  // (Prevents firing 95+ sequential network Range requests during initial book open)
+  // Populate Table of Contents immediately from backend book.toc (0ms instant!)
+  // Fallback to client-side extraction only if legacy book has not backfilled yet.
   useEffect(() => {
+    if (book.toc) {
+      try {
+        const parsed = typeof book.toc === 'string' ? JSON.parse(book.toc) : book.toc;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTocItems(parsed);
+          return;
+        }
+      } catch {
+        // ignore JSON parse error and fallback
+      }
+    }
+
     if (showTocDrawer && pdfDoc && tocItems.length === 0) {
       extractTableOfContents(pdfDoc).then((items) => {
         setTocItems(items);
       }).catch(() => {});
     }
-  }, [showTocDrawer, pdfDoc, tocItems.length]);
+  }, [book.toc, showTocDrawer, pdfDoc, tocItems.length]);
 
   // 2. Extract structured text and page image snapshot whenever page changes
   const extractPageData = useCallback(async (doc: any, pageNum: number) => {
