@@ -22,6 +22,9 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { sanitizeSingleWord } from '../lib/wordFinder';
+import { MobileTranslationSheet } from './MobileTranslationSheet';
+
 
 export interface MobileAICompanionSheetProps {
   isOpen: boolean;
@@ -150,9 +153,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   const [errorMap, setErrorMap] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<boolean>(false);
 
+  const currentContent = contentMap[activeTab] || '';
+  const currentLoading = !!loadingMap[activeTab];
+  const currentError = errorMap[activeTab] || '';
+
   // Vocabulary
   const [bookVocab, setBookVocab] = useState<any[]>([]);
   const [loadingVocab, setLoadingVocab] = useState<boolean>(false);
+
 
   // Real-time Thinking HUD states
   const [thinkingElapsed, setThinkingElapsed] = useState<number>(0);
@@ -161,6 +169,10 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   // Interactive Quiz state
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [revealedExplanations, setRevealedExplanations] = useState<Record<string, boolean>>({});
+
+  // In-sheet Word Translation
+  const [translatingTarget, setTranslatingTarget] = useState<{ word: string; contextSentence?: string } | null>(null);
+
 
   // Auto-scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -454,8 +466,56 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
     setRevealedExplanations({});
   };
 
+  // Helper to extract full sentence containing the word for AI context
+  const findContextSentence = (fullText: string, searchWord: string): string => {
+    if (!fullText || !searchWord) return '';
+    const cleanWord = searchWord.trim().toLowerCase();
+    const sentences = fullText.split(/(?<=[.?!])\s+/);
+    for (const sentence of sentences) {
+      if (sentence.toLowerCase().includes(cleanWord)) {
+        return sentence.trim();
+      }
+    }
+    return '';
+  };
+
+  const handleWordClick = useCallback((word: string, fallbackContext?: string) => {
+    const clean = sanitizeSingleWord(word);
+    if (!clean) return;
+    const ctx = findContextSentence(fallbackContext || currentContent || '', clean) || fallbackContext || '';
+    setTranslatingTarget({
+      word: clean,
+      contextSentence: ctx,
+    });
+  }, [currentContent]);
+
+  const renderWords = (plainText: string, blockContext?: string) => {
+    if (!plainText) return null;
+    const tokens = plainText.split(/(\s+|[.,!?;:()\[\]{}""'«»/\\—–-])/g);
+    return tokens.map((token, i) => {
+      const clean = sanitizeSingleWord(token);
+      if (clean) {
+        const isSelected = translatingTarget?.word.toLowerCase() === clean.toLowerCase();
+        return (
+          <span
+            key={i}
+            className={`read-word ${isSelected ? 'read-word-selected' : ''}`}
+            data-word={clean}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleWordClick(clean, blockContext || plainText);
+            }}
+          >
+            {token}
+          </span>
+        );
+      }
+      return token;
+    });
+  };
+
   // Markdown inline renderer
-  const renderInline = (text: string) => {
+  const renderInline = (text: string, blockContext?: string) => {
     let toParse = text;
     const boldMatches = toParse.match(/\*\*/g);
     if (boldMatches && boldMatches.length % 2 !== 0) {
@@ -465,16 +525,35 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
     const parts = toParse.split(/(\*\*.*?\*\*|`.*?`)/g);
     return parts.map((part, idx) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={idx} className="font-extrabold text-[var(--app-text)]">{part.slice(2, -2)}</strong>;
+        const inner = part.slice(2, -2);
+        return (
+          <strong key={idx} className="font-extrabold text-[var(--app-text)]">
+            {renderWords(inner, blockContext || text)}
+          </strong>
+        );
       }
       if (part.startsWith('`') && part.endsWith('`')) {
+        const inner = part.slice(1, -1);
+        const clean = sanitizeSingleWord(inner);
+        const isSelected = clean && translatingTarget?.word.toLowerCase() === clean.toLowerCase();
         return (
-          <code key={idx} className="px-1.5 py-0.5 mx-0.5 rounded-md text-[13px] sm:text-sm font-mono bg-[var(--app-card)] text-[var(--app-accent)] font-bold border border-[var(--app-border)]/50">
-            {part.slice(1, -1)}
+          <code
+            key={idx}
+            className={`px-1.5 py-0.5 mx-0.5 rounded-md text-[13px] sm:text-sm font-mono bg-[var(--app-card)] text-[var(--app-accent)] font-bold border border-[var(--app-border)]/50 cursor-pointer active:scale-95 transition-all ${
+              isSelected ? 'read-word-selected' : ''
+            }`}
+            onClick={(e) => {
+              if (clean) {
+                e.stopPropagation();
+                handleWordClick(clean, blockContext || text);
+              }
+            }}
+          >
+            {inner}
           </code>
         );
       }
-      return <span key={idx}>{part}</span>;
+      return <span key={idx}>{renderWords(part, blockContext || text)}</span>;
     });
   };
 
@@ -499,7 +578,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                 <span>Quick Summary (TL;DR)</span>
               </div>
               <p className="text-[14.5px] sm:text-base leading-[1.65] font-medium text-[var(--app-text)]">
-                {renderInline(body)}
+                {renderInline(body, trimmed)}
               </p>
             </div>
           );
@@ -535,7 +614,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           <div key={bIdx} className="my-3.5 p-4 rounded-2xl bg-[var(--app-card)] border-l-4 border-[var(--app-accent)] flex items-start gap-3">
             <Quote className="w-4.5 h-4.5 text-[var(--app-accent)] shrink-0 mt-0.5 opacity-80" />
             <div className="text-[14px] sm:text-base text-[var(--app-text)] italic leading-[1.65]">
-              {renderInline(quoteContent)}
+              {renderInline(quoteContent, quoteContent)}
             </div>
           </div>
         );
@@ -547,12 +626,12 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         const level = headingMatch[1].length;
         const headingText = headingMatch[2].trim();
         if (level === 1) {
-          return <h2 key={bIdx} className="text-lg font-extrabold text-[var(--app-text)] mt-5 mb-2.5">{renderInline(headingText)}</h2>;
+          return <h2 key={bIdx} className="text-lg font-extrabold text-[var(--app-text)] mt-5 mb-2.5">{renderInline(headingText, headingText)}</h2>;
         }
         if (level === 2) {
-          return <h3 key={bIdx} className="text-base font-bold text-[var(--app-text)] mt-4 mb-2 flex items-center gap-2">{renderInline(headingText)}</h3>;
+          return <h3 key={bIdx} className="text-base font-bold text-[var(--app-text)] mt-4 mb-2 flex items-center gap-2">{renderInline(headingText, headingText)}</h3>;
         }
-        return <h4 key={bIdx} className="text-sm font-bold text-[var(--app-muted)] uppercase tracking-wider mt-3.5 mb-1.5">{renderInline(headingText)}</h4>;
+        return <h4 key={bIdx} className="text-sm font-bold text-[var(--app-muted)] uppercase tracking-wider mt-3.5 mb-1.5">{renderInline(headingText, headingText)}</h4>;
       }
 
       // 5. Unordered List Items
@@ -563,7 +642,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
             {lines.map((line, lIdx) => (
               <li key={lIdx} className="flex items-start gap-2.5 text-[14.5px] sm:text-base leading-[1.65] text-[var(--app-text)]">
                 <span className="w-2 h-2 rounded-full bg-[var(--app-accent)] mt-2 shrink-0" />
-                <span className="flex-1">{renderInline(line.replace(/^[-*]\s+/, ''))}</span>
+                <span className="flex-1">{renderInline(line.replace(/^[-*]\s+/, ''), line)}</span>
               </li>
             ))}
           </ul>
@@ -584,7 +663,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                   <span className="w-5 h-5 rounded-full bg-[var(--app-card)] text-[var(--app-accent)] font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--app-border)]">
                     {num}
                   </span>
-                  <span className="flex-1">{renderInline(text)}</span>
+                  <span className="flex-1">{renderInline(text, line)}</span>
                 </li>
               );
             })}
@@ -595,19 +674,18 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       // 7. Regular Paragraph
       return (
         <p key={bIdx} className="my-2.5 text-[14.5px] sm:text-base leading-[1.65] text-[var(--app-text)] font-normal">
-          {renderInline(trimmed)}
+          {renderInline(trimmed, trimmed)}
         </p>
       );
     });
   };
 
 
+
   if (!isOpen) return null;
 
-  const currentContent = contentMap[activeTab] || '';
-  const currentLoading = !!loadingMap[activeTab];
-  const currentError = errorMap[activeTab] || '';
   const currentDuration = thoughtDurationMap[activeTab];
+
 
   return (
     <div className="absolute inset-0 z-50 w-full h-full bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col select-none overflow-hidden animate-fadeIn">
@@ -978,7 +1056,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                           {q.number}
                         </span>
                         <h4 className="text-[15px] sm:text-base font-bold text-[var(--app-text)] leading-snug">
-                          {q.question}
+                          {renderWords(q.question, q.question)}
                         </h4>
                       </div>
 
@@ -1015,7 +1093,9 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                               }`}>
                                 {opt.letter}
                               </span>
-                              <span className="text-[14px] sm:text-[15px] leading-relaxed flex-1">{opt.text}</span>
+                              <span className="text-[14px] sm:text-[15px] leading-relaxed flex-1">
+                                {renderWords(opt.text, opt.text)}
+                              </span>
                               {isAnswered && isOptCorrect && (
                                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                               )}
@@ -1039,7 +1119,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                           {showExpl && (
                             <div className="mt-2 p-3.5 rounded-xl bg-[var(--app-surface)] text-[13.5px] sm:text-sm text-[var(--app-text)] leading-relaxed border border-[var(--app-border)] space-y-1">
                               <p className="font-bold text-[var(--app-accent)]">Correct answer: {q.correctAnswerLetter}</p>
-                              <p className="opacity-90">{q.explanation || 'No detailed explanation provided.'}</p>
+                              <p className="opacity-90">{renderWords(q.explanation || 'No detailed explanation provided.', q.explanation)}</p>
                             </div>
                           )}
                         </div>
@@ -1114,6 +1194,22 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         ) : null
       )}
 
+      {/* 5. In-Sheet Instant Word Translation Sheet */}
+      {translatingTarget && (
+        <MobileTranslationSheet
+          word={translatingTarget.word}
+          bookId={bookId}
+          bookTitle={bookTitle}
+          bookAuthor={bookAuthor}
+          pageNumber={pageNumber}
+          contextSentence={translatingTarget.contextSentence}
+          onClose={() => {
+            setTranslatingTarget(null);
+            fetchBookVocab();
+          }}
+        />
+      )}
     </div>
   );
 };
+

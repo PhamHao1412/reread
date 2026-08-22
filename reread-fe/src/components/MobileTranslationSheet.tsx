@@ -224,7 +224,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
       {/* Backdrop with synthetic touch release protection */}
       <div
         className="absolute inset-0"
