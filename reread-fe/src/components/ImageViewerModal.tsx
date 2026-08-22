@@ -188,7 +188,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
       {/* ── Header ── */}
       <div className="w-full flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 z-10 shrink-0">
         <span className="text-sm font-extrabold text-white">
-          Sơ đồ &amp; Hình ảnh — Trang {pageNumber}
+          Figure &amp; Illustration — Page {pageNumber}
         </span>
         <div className="flex items-center space-x-2">
           {isZoomed && (
@@ -220,7 +220,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
       >
         <img
           src={imageUrl}
-          alt={`Sơ đồ trang ${pageNumber}`}
+          alt={`Figure on page ${pageNumber}`}
           draggable={false}
           className="rounded-2xl shadow-2xl bg-white object-contain border border-white/10"
           style={{
@@ -248,7 +248,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
             className="flex items-center space-x-1.5 px-4 py-2 rounded-full bg-white/10 text-white text-xs font-bold hover:bg-white/20 disabled:opacity-30 transition-all active:scale-95"
           >
             <ZoomOut className="h-3.5 w-3.5" />
-            <span>Thu nhỏ</span>
+            <span>Zoom out</span>
           </button>
           <span className="text-white/50 text-xs font-bold tabular-nums min-w-[44px] text-center">
             {Math.round(scale * 100)}%
@@ -259,11 +259,11 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
             className="flex items-center space-x-1.5 px-4 py-2 rounded-full bg-white/10 text-white text-xs font-bold hover:bg-white/20 disabled:opacity-30 transition-all active:scale-95"
           >
             <ZoomIn className="h-3.5 w-3.5" />
-            <span>Phóng to</span>
+            <span>Zoom in</span>
           </button>
         </div>
         <p className="text-white/40 text-[11px]">
-          {isZoomed ? 'Chạm 2 lần hoặc nhấn nút để reset' : 'Dùng 2 ngón tay hoặc nhấn nút để phóng to'}
+          {isZoomed ? 'Double tap or click button to reset' : 'Pinch or click button to zoom'}
         </p>
       </div>
     </div>

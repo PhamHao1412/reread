@@ -28,10 +28,10 @@ export const MobileAppShell: React.FC<MobileAppShellProps> = ({
   const { user, logout } = useAuth();
 
   const navItems: { id: TabType; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'library', label: 'Tủ sách', icon: BookOpen },
-    { id: 'reading', label: 'Đang đọc', icon: Compass },
-    { id: 'bookmarks', label: 'Đánh dấu', icon: BookmarkIcon },
-    { id: 'settings', label: 'Cài đặt', icon: Settings },
+    { id: 'library', label: 'Library', icon: BookOpen },
+    { id: 'reading', label: 'Reading', icon: Compass },
+    { id: 'bookmarks', label: 'Bookmarks', icon: BookmarkIcon },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (

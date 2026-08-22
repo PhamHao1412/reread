@@ -103,13 +103,13 @@ export const PdfMobileViewer: React.FC<PdfMobileViewerProps> = ({
       {rendering && !imageUrl ? (
         <div className="flex flex-col items-center justify-center my-auto py-16 space-y-3">
           <Loader2 className="h-9 w-9 text-[var(--app-accent)] animate-spin" />
-          <p className="text-xs text-[var(--app-muted)] font-bold">Đang tải trang sách...</p>
+          <p className="text-xs text-[var(--app-muted)] font-bold">Loading page...</p>
         </div>
       ) : (
         <div className="w-full max-w-full flex items-center justify-center">
           <img
             src={imageUrl}
-            alt={`Trang ${currentPage}`}
+            alt={`Page ${currentPage}`}
             className="w-full max-w-full rounded-2xl shadow-2xl bg-white border border-[var(--app-border)] object-contain transition-opacity duration-200"
           />
         </div>

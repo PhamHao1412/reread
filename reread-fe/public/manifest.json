@@ -1,7 +1,7 @@
 {
-  "name": "ReRead — Sách di động thông minh",
+  "name": "ReRead — Smart Mobile Reader",
   "short_name": "ReRead",
-  "description": "Ứng dụng đọc sách di động thông minh với chế độ đọc nhanh Readthrough và tra từ điển 1 chạm.",
+  "description": "Smart mobile reading app with Readthrough mode and AI Companion.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

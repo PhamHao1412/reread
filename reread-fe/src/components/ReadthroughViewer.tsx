@@ -282,10 +282,10 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
           </div>
           <div>
             <h4 className="text-sm font-black text-[var(--app-text)]">
-              Trang phân cách chương
+              Chapter Separator Page
             </h4>
             <p className="text-xs text-[var(--app-muted)] mt-1 leading-relaxed">
-              Trang {currentPage} là trang trắng ngắt chương trong bản in gốc của sách.
+              Page {currentPage} is a blank page or chapter separator in the original print.
             </p>
           </div>
           {currentPage < totalPages && (
@@ -296,7 +296,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
               }}
               className="w-full py-2.5 px-4 rounded-2xl btn-accent text-xs font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5"
             >
-              <span>Đọc chương tiếp (Trang {currentPage + 1})</span>
+              <span>Next Chapter (Page {currentPage + 1})</span>
               <ChevronRight className="h-4 w-4" />
             </button>
           )}
@@ -325,7 +325,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
       <div className="flex items-center justify-center space-x-2 mb-6" data-no-translate>
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] text-[11px] font-extrabold shadow-xs">
           <Zap className="h-3.5 w-3.5 fill-current" />
-          <span>Chế độ Readthrough</span>
+          <span>Readthrough Mode</span>
         </div>
 
         {/* Smart Figure Detection Quick Button */}
@@ -342,7 +342,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
             }`}
           >
             <ImageIcon className="h-3.5 w-3.5" />
-            <span>{showInlineImage ? 'Ẩn sơ đồ' : hasFigureReference ? '🖼️ Xem sơ đồ Figure' : 'Xem sơ đồ'}</span>
+            <span>{showInlineImage ? 'Hide Figure' : hasFigureReference ? '🖼️ View Figure' : 'View Figure'}</span>
           </button>
         )}
       </div>
@@ -353,7 +353,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
           <div className="flex justify-between items-center mb-2 px-1">
             <span className="text-xs font-black text-[var(--app-text)] flex items-center">
               <ImageIcon className="h-4 w-4 mr-1.5 text-orange-warm" />
-              Sơ đồ & Hình ảnh nguyên bản (Trang {currentPage})
+              Original Figure & Illustration (Page {currentPage})
             </span>
             <button
               onClick={(e) => {
@@ -363,7 +363,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
               className="p-1.5 rounded-xl bg-[var(--app-surface)] text-[var(--app-accent)] hover:opacity-80 transition-all flex items-center space-x-1 text-[10px] font-bold"
             >
               <Maximize2 className="h-3.5 w-3.5" />
-              <span>Phóng to</span>
+              <span>Enlarge</span>
             </button>
           </div>
 
@@ -376,7 +376,7 @@ export const ReadthroughViewer: React.FC<ReadthroughViewerProps> = ({
           >
             <img
               src={pageImageUrl}
-              alt={`Sơ đồ trang ${currentPage}`}
+              alt={`Figure on page ${currentPage}`}
               className="w-full object-contain max-h-[380px] select-none"
             />
           </div>

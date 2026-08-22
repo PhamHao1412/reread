@@ -28,7 +28,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
         api.prefetchBookBlob(activeBook);
       }
     } catch (err: any) {
-      setError(err.message || 'Không thể tải danh sách sách.');
+      setError(err.message || 'Failed to load books.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
   }, []);
 
   const formats: { id: string; label: string }[] = [
-    { id: 'all', label: 'Tất cả' },
+    { id: 'all', label: 'All' },
     { id: 'pdf', label: 'PDF' },
     { id: 'epub', label: 'EPUB' },
     { id: 'txt', label: 'TXT' },
@@ -84,7 +84,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm sách theo tên hoặc tác giả..."
+          placeholder="Search by title or author..."
           className="w-full pl-12 pr-4 py-3 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] text-[15px] font-medium text-[var(--app-text)] placeholder-[var(--app-muted)] focus:outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)] transition-all shadow-inner"
         />
       </div>
@@ -112,7 +112,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-black text-[var(--app-text)] flex items-center">
               <Sparkles className="h-4 w-4 mr-1.5 text-orange-warm fill-orange-warm" />
-              Đang đọc gần đây
+              Continue Reading
             </h3>
           </div>
           <div
@@ -133,7 +133,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
                       {recentBook.file_type || recentBook.format || 'pdf'}
                     </span>
                     <span className="text-[10px] text-[var(--app-muted)] font-medium truncate">
-                      {recentBook.author || 'Tác giả chưa rõ'}
+                      {recentBook.author || 'Unknown author'}
                     </span>
                   </div>
                   <h4 className="text-[15px] font-black text-[var(--app-text)] mt-1 truncate">
@@ -143,7 +143,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
 
                 <div>
                   <div className="flex justify-between text-[10px] font-bold text-[var(--app-text-secondary)] mb-1">
-                    <span>Trang {recentBook.current_page || 1} / {recentBook.total_pages || 1}</span>
+                    <span>Page {recentBook.current_page || 1} of {recentBook.total_pages || 1}</span>
                     <span className="text-[var(--app-accent)] font-extrabold">
                       {Math.round(((recentBook.current_page || 1) / (recentBook.total_pages || 1)) * 100)}%
                     </span>
@@ -171,11 +171,11 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-[15px] font-black text-[var(--app-text)]">
-            Tất cả sách ({filteredBooks.length})
+            All Books ({filteredBooks.length})
           </h3>
           <button
             onClick={fetchBooks}
-            title="Làm mới"
+            title="Refresh"
             className="p-1 rounded-lg text-[var(--app-muted)] hover:text-[var(--app-text)] transition-all"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -185,7 +185,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 text-[var(--app-muted)] space-y-3">
             <div className="h-8 w-8 rounded-full border-2 border-[var(--app-accent)] border-t-transparent animate-spin" />
-            <p className="text-xs font-medium">Đang tải tủ sách của bạn...</p>
+            <p className="text-xs font-medium">Loading your library...</p>
           </div>
         ) : error ? (
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-center text-red-500 text-xs">
@@ -194,15 +194,15 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
               onClick={fetchBooks}
               className="mt-3 px-4 py-1.5 rounded-xl bg-red-500/20 text-red-600 dark:text-red-400 font-bold"
             >
-              Thử lại
+              Retry
             </button>
           </div>
         ) : filteredBooks.length === 0 ? (
           <div className="p-8 rounded-3xl bg-[var(--app-card)] border border-[var(--app-border)] text-center text-[var(--app-muted)] flex flex-col items-center">
             <FileText className="h-12 w-12 text-[var(--app-muted)]/40 mb-3" />
-            <p className="text-sm font-black text-[var(--app-text)]">Chưa có cuốn sách nào</p>
+            <p className="text-sm font-black text-[var(--app-text)]">No books found</p>
             <p className="text-xs text-[var(--app-muted)] mt-1 max-w-[240px]">
-              Hãy tải thêm sách vào tài khoản của bạn tại ứng dụng Readthrough trên máy tính.
+              Upload books from the Readthrough desktop application.
             </p>
           </div>
         ) : (
@@ -231,13 +231,13 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onSelectBook }) =>
                       {book.title}
                     </h4>
                     <p className="text-[11px] text-[var(--app-muted)] font-medium mt-0.5 truncate">
-                      {book.author || 'Tác giả chưa rõ'}
+                      {book.author || 'Unknown author'}
                     </p>
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-[var(--app-border)]">
                     <div className="flex justify-between text-[10px] text-[var(--app-text-secondary)] font-bold mb-1">
-                      <span>{book.total_pages ? `${book.total_pages} trang` : 'Đang cập nhật'}</span>
+                      <span>{book.total_pages ? `${book.total_pages} pages` : 'Updating'}</span>
                       {progress > 0 && <span className="text-[var(--app-accent)]">{progress}%</span>}
                     </div>
                     {progress > 0 && (

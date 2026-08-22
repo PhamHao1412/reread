@@ -156,3 +156,46 @@ body {
     min-height: -webkit-fill-available;
   }
 }
+
+/* AI Real-time Thinking HUD Styles */
+.ai-brain-pulse {
+  animation: aiBrainPulse 2s infinite ease-in-out;
+}
+
+@keyframes aiBrainPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0px var(--app-accent));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--app-accent) 60%, transparent));
+  }
+}
+
+.ai-thinking-shimmer-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--app-surface);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ai-thinking-shimmer-progress {
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--app-accent), transparent);
+  border-radius: 9999px;
+  animation: thinkingShimmerMove 1.5s infinite ease-in-out;
+}
+
+@keyframes thinkingShimmerMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+

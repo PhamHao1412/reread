@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { TocItem } from '../lib/pdfToc';
-import { X, List, ChevronRight, BookOpen } from 'lucide-react';
+import { isChapterOrMajorContainer } from '../lib/sectionExtractor';
+import { X, List, ChevronRight, BookOpen, Sparkles, ArrowLeft, Search, Compass } from 'lucide-react';
 
 interface TableOfContentsDrawerProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface TableOfContentsDrawerProps {
   currentPage: number;
   totalPages: number;
   onSelectPage: (page: number) => void;
+  onSummarizeItem?: (item: TocItem) => void;
 }
 
 export const TableOfContentsDrawer: React.FC<TableOfContentsDrawerProps> = ({
@@ -18,120 +20,198 @@ export const TableOfContentsDrawer: React.FC<TableOfContentsDrawerProps> = ({
   currentPage,
   totalPages,
   onSelectPage,
+  onSummarizeItem,
 }) => {
-  const mountTimeRef = useRef<number>(Date.now());
-  const backdropPointerDownRef = useRef<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const activeItemRef = useRef<HTMLDivElement | null>(null);
 
+  // If no PDF outline exists, generate fallback sections
+  const displayItems: TocItem[] = useMemo(() => {
+    return items.length > 0 ? items : Array.from({ length: Math.ceil(totalPages / 20) }, (_, i) => ({
+      id: `chunk-${i}`,
+      title: `Section ${i + 1}: Page ${i * 20 + 1} - ${Math.min((i + 1) * 20, totalPages)}`,
+      pageNumber: i * 20 + 1,
+      level: 0,
+    }));
+  }, [items, totalPages]);
+
+  // Filter items by search query
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return displayItems;
+    const q = searchQuery.toLowerCase().trim();
+    return displayItems.filter(item => item.title.toLowerCase().includes(q));
+  }, [displayItems, searchQuery]);
+
+  // Auto-scroll to active item when opened
   useEffect(() => {
-    if (isOpen) {
-      mountTimeRef.current = Date.now();
-      backdropPointerDownRef.current = false;
+    if (isOpen && activeItemRef.current) {
+      const timer = setTimeout(() => {
+        activeItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleBackdropPointerDown = (e: React.PointerEvent | React.TouchEvent | React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      backdropPointerDownRef.current = true;
-    }
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (Date.now() - mountTimeRef.current < 400) {
-      return;
-    }
-    if (!backdropPointerDownRef.current) {
-      return;
-    }
-    onClose();
-  };
-
-  // If no PDF outline exists, generate fallback sections
-  const displayItems: TocItem[] = items.length > 0 ? items : Array.from({ length: Math.ceil(totalPages / 20) }, (_, i) => ({
-    id: `chunk-${i}`,
-    title: `Phần ${i + 1}: Trang ${i * 20 + 1} - ${Math.min((i + 1) * 20, totalPages)}`,
-    pageNumber: i * 20 + 1,
-    level: 0,
-  }));
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
-      {/* Backdrop with synthetic touch release protection */}
-      <div
-        className="absolute inset-0"
-        onPointerDown={handleBackdropPointerDown}
-        onMouseDown={handleBackdropPointerDown}
-        onTouchStart={handleBackdropPointerDown}
-        onClick={handleBackdropClick}
-      />
-
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md bg-[var(--app-surface)] text-[var(--app-text)] rounded-t-[28px] border-t border-[var(--app-border)] p-6 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)] z-10 max-h-[80vh] flex flex-col shadow-2xl animate-slide-up select-none"
-      >
-        {/* Drag handle */}
-        <div className="mx-auto w-12 h-1 bg-[var(--app-muted)]/30 rounded-full mb-4 shrink-0" />
-
-        {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-[var(--app-border)] shrink-0">
-          <h3 className="text-base font-black text-[var(--app-text)] flex items-center">
-            <List className="h-4.5 w-4.5 mr-2 text-[var(--app-accent)]" />
-            Mục lục sách ({displayItems.length} mục)
-          </h3>
+    <div className="absolute inset-0 z-50 w-full h-full bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col select-none overflow-hidden animate-fadeIn">
+      {/* 1. Full-Screen Top Header with Safe Area Top offset */}
+      <div className="w-full bg-[var(--app-surface)]/95 backdrop-blur-xl border-b border-[var(--app-border)] px-4 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] pb-2.5 flex items-center justify-between shrink-0 shadow-sm z-20">
+        <div className="flex items-center space-x-3 overflow-hidden flex-1 min-w-0 pr-2">
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-[var(--app-muted)] hover:text-[var(--app-text)] transition-all"
+            className="p-1.5 rounded-xl bg-[var(--app-card)] text-[var(--app-text)] hover:opacity-80 active:scale-95 transition-all shrink-0 border border-[var(--app-border)]"
+            title="Back to reading"
           >
-            <X className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </button>
+
+          <div className="overflow-hidden flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[var(--app-accent)]/20 text-[var(--app-accent)] border border-[var(--app-accent)]/30">
+                <List className="w-2.5 h-2.5" />
+                <span>{displayItems.length} items</span>
+              </span>
+
+              {currentPage > 0 && (
+                <span className="text-[10px] font-mono font-bold text-[var(--app-muted)] bg-[var(--app-card)] px-1.5 py-0.2 rounded-md border border-[var(--app-border)]">
+                  Current: p. {currentPage}
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-sm font-extrabold text-[var(--app-text)] truncate leading-snug">
+              Table of Contents
+            </h2>
+          </div>
         </div>
 
-        {/* Chapters list */}
-        <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-1.5">
-          {displayItems.map((item) => {
+        <button
+          onClick={onClose}
+          className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-muted)] hover:text-[var(--app-text)] active:scale-95 transition-all shrink-0"
+          title="Close Table of Contents"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* 2. Quick Search Filter Bar */}
+      <div className="px-4 py-2 bg-[var(--app-surface)]/80 border-b border-[var(--app-border)] shrink-0 flex items-center gap-2 z-10">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--app-muted)]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chapters or sections..."
+            className="w-full bg-[var(--app-card)] border border-[var(--app-border)] rounded-xl pl-9 pr-8 py-2 text-xs text-[var(--app-text)] placeholder-[var(--app-muted)] focus:outline-none focus:border-[var(--app-accent)] transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--app-muted)] hover:text-[var(--app-text)] p-0.5 rounded-full"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {searchQuery && (
+          <span className="text-[11px] font-bold text-[var(--app-muted)] shrink-0">
+            {filteredItems.length} found
+          </span>
+        )}
+      </div>
+
+      {/* 3. Full-Height Scrollable Chapters List */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-[max(env(safe-area-inset-bottom,0px),1.5rem)]">
+        {filteredItems.length === 0 ? (
+          <div className="h-48 flex flex-col items-center justify-center text-center p-6 space-y-2">
+            <Compass className="w-8 h-8 text-[var(--app-muted)]" />
+            <p className="text-xs font-bold text-[var(--app-muted)]">No sections match "{searchQuery}"</p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-xs text-[var(--app-accent)] font-bold underline"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          filteredItems.map((item) => {
             const isCurrent = currentPage >= item.pageNumber && (
-              // If next item exists, check if current page is before next item
               displayItems.find((next, idx) => idx > displayItems.indexOf(item) && next.pageNumber > item.pageNumber)
                 ? currentPage < (displayItems.find((next, idx) => idx > displayItems.indexOf(item) && next.pageNumber > item.pageNumber)?.pageNumber || Infinity)
                 : true
             );
 
+            const isChapter = isChapterOrMajorContainer(item, displayItems);
+
             return (
               <div
                 key={item.id}
+                ref={isCurrent ? activeItemRef : undefined}
                 onClick={() => {
                   onSelectPage(item.pageNumber);
                   onClose();
                 }}
-                style={{ paddingLeft: `${Math.min(item.level * 16 + 12, 48)}px` }}
+                style={{ paddingLeft: `${Math.min(item.level * 16 + 14, 60)}px` }}
                 className={`flex items-center justify-between py-3 pr-3 rounded-2xl cursor-pointer active:scale-98 transition-all border ${
                   isCurrent
-                    ? 'bg-[var(--app-accent)]/15 border-[var(--app-accent)]/30 text-[var(--app-accent)] font-bold'
-                    : 'bg-[var(--app-card)] border-transparent hover:border-[var(--app-border)] text-[var(--app-text)]'
+                    ? 'bg-[var(--app-accent)]/15 border-[var(--app-accent)]/40 text-[var(--app-accent)] font-bold shadow-xs'
+                    : isChapter
+                    ? 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)] font-bold hover:border-[var(--app-accent)]/30'
+                    : 'bg-[var(--app-card)]/70 border-transparent hover:border-[var(--app-border)] text-[var(--app-text)]'
                 }`}
               >
-                <div className="flex items-center space-x-2.5 overflow-hidden pr-2">
-                  <BookOpen className={`h-4 w-4 shrink-0 ${isCurrent ? 'text-[var(--app-accent)]' : 'text-[var(--app-muted)]'}`} />
-                  <span className="text-xs font-semibold truncate leading-tight">
+                <div className="flex items-center space-x-2.5 overflow-hidden pr-2 flex-1 min-w-0">
+                  <BookOpen className={`h-4 w-4 shrink-0 ${
+                    isCurrent 
+                      ? 'text-[var(--app-accent)]' 
+                      : isChapter 
+                      ? 'text-purple-400' 
+                      : 'text-[var(--app-muted)]'
+                  }`} />
+                  <span className={`text-xs truncate leading-tight ${isChapter ? 'font-bold' : 'font-medium'}`}>
                     {item.title}
                   </span>
                 </div>
 
                 <div className="flex items-center space-x-1.5 shrink-0">
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
-                    isCurrent ? 'bg-[var(--app-accent)] text-white' : 'bg-[var(--app-surface)] text-[var(--app-muted)]'
+                  {onSummarizeItem && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSummarizeItem(item);
+                        onClose();
+                      }}
+                      className={`p-1.5 rounded-lg active:scale-90 transition-all ${
+                        isChapter
+                          ? 'text-purple-400 bg-purple-500/15 border border-purple-500/30 hover:bg-purple-500/25 shadow-xs'
+                          : 'text-[var(--app-accent)] bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 hover:bg-[var(--app-accent)]/25 shadow-xs'
+                      }`}
+                      title={isChapter ? 'Analyze Chapter Roadmap & Overview' : 'Deep Dive this section'}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                    isCurrent 
+                      ? 'bg-[var(--app-accent)] text-white' 
+                      : 'bg-[var(--app-surface)] text-[var(--app-muted)] border border-[var(--app-border)]'
                   }`}>
-                    Tr. {item.pageNumber}
+                    p. {item.pageNumber}
                   </span>
                   <ChevronRight className="h-3.5 w-3.5 text-[var(--app-muted)] opacity-60" />
                 </div>
               </div>
             );
-          })}
-        </div>
+          })
+        )}
       </div>
     </div>
   );
 };
+

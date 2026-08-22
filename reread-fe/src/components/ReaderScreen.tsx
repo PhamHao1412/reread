@@ -6,16 +6,22 @@ import { ReadthroughViewer } from './ReadthroughViewer';
 import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
 import { TableOfContentsDrawer } from './TableOfContentsDrawer';
 import { MobileTranslationSheet } from './MobileTranslationSheet';
+import { MobileAICompanionSheet } from './MobileAICompanionSheet';
 import { api } from '../lib/api';
 import { hasCachedBlob, bookEtag } from '../lib/bookCache';
 import { extractStructuredTextFromPageItems } from '../lib/pdfTextExtractor';
+
 import { extractTableOfContents, TocItem } from '../lib/pdfToc';
+import { extractPdfSectionText, extractPdfChapterOverviewText, findSectionPageRange, flattenOutline, isChapterOrMajorContainer } from '../lib/sectionExtractor';
+
+
+
 import { renderPageToDataUrl } from '../lib/pageRenderer';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { 
   ArrowLeft, Sliders, Zap, BookOpen, Bookmark, 
-  ChevronLeft, ChevronRight, AlertCircle, Loader2, List 
+  ChevronLeft, ChevronRight, AlertCircle, Loader2, List, Sparkles 
 } from 'lucide-react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -42,6 +48,15 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [bookmarkedPages, setBookmarkedPages] = useState<Map<number, string>>(new Map());
   const [translatingTarget, setTranslatingTarget] = useState<{ word: string; contextSentence?: string } | null>(null);
+
+  // AI Reading Companion states
+  const [showAiSheet, setShowAiSheet] = useState<boolean>(false);
+  const [companionSectionTitle, setCompanionSectionTitle] = useState<string>('');
+  const [companionPageNumber, setCompanionPageNumber] = useState<number>(1);
+  const [companionContent, setCompanionContent] = useState<string>('');
+  const [companionIsChapter, setCompanionIsChapter] = useState<boolean>(false);
+  const [isExtractingAi, setIsExtractingAi] = useState<boolean>(false);
+  const extractionSeqRef = useRef<number>(0);
 
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const progressTimerRef = useRef<any>(null);
@@ -108,7 +123,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         setTotalPages(doc.numPages);
       } catch (err: any) {
         if (!active) return;
-        setLoadError(err.message || 'Không thể tải nội dung cuốn sách.');
+        setLoadError(err.message || 'Unable to load book content.');
       } finally {
         if (active) setLoadingFile(false);
       }
@@ -221,7 +236,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         return next;
       });
       try {
-        const res = await api.addBookmark(book.id, page, `Trang ${page} - ${book.title}`);
+        const res = await api.addBookmark(book.id, page, `Page ${page} - ${book.title}`);
         const bm = (res as any)?.data || res;
         const realId = String(bm?.id || (bm as any)?.ID || '');
         if (realId) {
@@ -236,6 +251,74 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
       }
     }
   };
+
+  const openAICompanionForSection = useCallback(async (item?: any) => {
+    const seq = ++extractionSeqRef.current;
+
+    let targetTitle = item?.title || '';
+    let targetPage = typeof item?.pageNumber === 'number' 
+      ? item.pageNumber 
+      : typeof item?.target === 'number' 
+      ? item.target 
+      : currentPage;
+
+    const isChapter = isChapterOrMajorContainer(item, tocItems);
+
+
+    if (!targetTitle) {
+      // Find matching TOC item for targetPage if available
+      const flat = flattenOutline(tocItems);
+      const matching = flat.filter(i => {
+        const p = typeof i.pageNumber === 'number' ? i.pageNumber : typeof (i as any).target === 'number' ? (i as any).target : 0;
+        return p > 0 && p <= targetPage;
+      });
+      if (matching.length > 0) {
+        targetTitle = matching[matching.length - 1].title;
+      } else {
+        targetTitle = `Page ${targetPage}`;
+      }
+    }
+
+    setCompanionSectionTitle(targetTitle);
+    setCompanionPageNumber(targetPage);
+    setCompanionIsChapter(isChapter);
+    setCompanionContent('');
+    setShowAiSheet(true);
+    setIsExtractingAi(true);
+
+    let text = '';
+    if (pdfDoc) {
+      if (isChapter) {
+        text = await extractPdfChapterOverviewText(pdfDoc, item, tocItems, totalPages || pdfDoc.numPages);
+      } else {
+        const range = findSectionPageRange(targetPage, tocItems, totalPages || pdfDoc.numPages, targetTitle);
+        text = await extractPdfSectionText(pdfDoc, range.startPage, range.endPage, targetTitle, range.nextSectionTitle);
+      }
+    }
+
+    if (extractionSeqRef.current === seq) {
+      setCompanionContent(text);
+      setIsExtractingAi(false);
+    }
+  }, [pdfDoc, tocItems, currentPage, totalPages]);
+
+  const openAICompanionForCurrentSection = useCallback(() => {
+    const flat = flattenOutline(tocItems);
+    const valid = flat
+      .map(i => ({ item: i, page: typeof i.pageNumber === 'number' ? i.pageNumber : typeof (i as any).target === 'number' ? (i as any).target : 0 }))
+      .filter(i => i.page > 0 && i.page <= currentPage)
+      .sort((a, b) => a.page - b.page);
+
+    const currentItem = valid.length > 0 ? valid[valid.length - 1].item : null;
+    if (currentItem) {
+      openAICompanionForSection(currentItem);
+    } else {
+      openAICompanionForSection({
+        title: `Page ${currentPage}`,
+        pageNumber: currentPage,
+      });
+    }
+  }, [currentPage, tocItems, openAICompanionForSection]);
 
   return (
     <div className="h-full w-full flex flex-col relative overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] select-none">
@@ -257,27 +340,51 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
               {book.title}
             </h2>
             <p className="text-[10px] text-[var(--app-muted)] font-bold">
-              Trang {currentPage} / {totalPages} ({Math.round((currentPage / Math.max(totalPages, 1)) * 100)}%)
+              Page {currentPage} of {totalPages} ({Math.round((currentPage / Math.max(totalPages, 1)) * 100)}%)
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0">
+          {/* AI Reading Companion Trigger */}
+          <button
+            onClick={() => {
+              setShowTocDrawer(false);
+              openAICompanionForCurrentSection();
+            }}
+            title="AI Reading Companion (Summary, Explain, Quiz)"
+            className={`p-2 rounded-xl border transition-all active:scale-95 ${
+              showAiSheet
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
+                : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-accent)] hover:opacity-80'
+            }`}
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+
           {/* Table of Contents Button */}
           <button
-            onClick={() => setShowTocDrawer(true)}
-            title="Mục lục sách"
-            className="p-2 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80 transition-all"
+            onClick={() => {
+              setShowAiSheet(false);
+              setShowTocDrawer(!showTocDrawer);
+            }}
+            title="Table of Contents"
+            className={`p-2 rounded-xl border transition-all active:scale-95 ${
+              showTocDrawer
+                ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
+                : 'bg-[var(--app-card)] border-[var(--app-border)] text-[var(--app-text)] hover:opacity-80'
+            }`}
           >
             <List className="h-4 w-4" />
           </button>
+
 
           {/* Quick Reading Mode Switch */}
           <button
             onClick={() =>
               setReadingMode(settings.readingMode === 'standard' ? 'readthrough' : 'standard')
             }
-            title={settings.readingMode === 'standard' ? 'Bật chế độ Readthrough' : 'Xem PDF gốc'}
+            title={settings.readingMode === 'standard' ? 'Switch to Readthrough mode' : 'View original PDF'}
             className={`p-2 rounded-xl border transition-all ${
               settings.readingMode === 'readthrough'
                 ? 'btn-accent shadow-lg'
@@ -294,7 +401,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           {/* Bookmark Button */}
           <button
             onClick={toggleBookmark}
-            title={isBookmarked ? 'Bỏ đánh dấu trang' : 'Đánh dấu trang này'}
+            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
             className={`p-2 rounded-xl border transition-all active:scale-95 ${
               isBookmarked
                 ? 'bg-[var(--app-accent)] border-[var(--app-accent)] text-white shadow-md'
@@ -319,7 +426,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         {loadingFile ? (
           <div className="h-full w-full flex flex-col items-center justify-center space-y-3 p-6 text-center">
             <Loader2 className="h-9 w-9 animate-spin" style={{ color: 'var(--app-accent)' }} />
-            <p className="text-sm font-bold text-[var(--app-text)]">Đang tải sách vào bộ nhớ di động...</p>
+            <p className="text-sm font-bold text-[var(--app-text)]">Loading book into mobile memory...</p>
             {downloadProgress > 0 && (
               <div className="w-48 bg-[var(--app-border)] rounded-full h-1.5 overflow-hidden my-1">
                 <div
@@ -329,7 +436,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
               </div>
             )}
             <p className="text-xs text-[var(--app-muted)] max-w-[240px]">
-              {downloadProgress > 0 ? `Đã nạp ${downloadProgress}% dữ liệu sách` : 'Đang kết nối để nạp dữ liệu cuốn sách'}
+              {downloadProgress > 0 ? `Loaded ${downloadProgress}% of book data` : 'Connecting to load book data...'}
             </p>
           </div>
         ) : loadError ? (
@@ -342,7 +449,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
               onClick={onBack}
               className="px-5 py-2.5 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] text-[var(--app-text)] text-xs font-bold"
             >
-              Quay lại tủ sách
+              Back to library
             </button>
           </div>
         ) : pdfDoc ? (
@@ -393,9 +500,9 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           className="flex-1 mx-3 px-3 py-1.5 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] flex flex-col items-center justify-center cursor-pointer active:scale-98 shadow-xs"
         >
           <div className="flex justify-between w-full text-[10px] font-bold text-[var(--app-text)] mb-1">
-            <span>Trang {currentPage}</span>
+            <span>Page {currentPage}</span>
             <span className="text-[var(--app-accent)] font-extrabold">{Math.round((currentPage / Math.max(totalPages, 1)) * 100)}%</span>
-            <span className="text-[var(--app-muted)]">{totalPages} trang</span>
+            <span className="text-[var(--app-muted)]">{totalPages} pages</span>
           </div>
           <div className="w-full h-1 bg-[var(--app-surface)] rounded-full overflow-hidden">
             <div
@@ -428,6 +535,7 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
         currentPage={currentPage}
         totalPages={totalPages}
         onSelectPage={(page) => handlePageChange(page, totalPages)}
+        onSummarizeItem={(item) => openAICompanionForSection(item)}
       />
 
       {/* 5. Settings Drawer Modal */}
@@ -451,6 +559,21 @@ export const ReaderScreen: React.FC<ReaderScreenProps> = ({ book, onBack }) => {
           onClose={() => setTranslatingTarget(null)}
         />
       )}
+
+      {/* 7. Mobile AI Reading Companion Bottom Sheet */}
+      <MobileAICompanionSheet
+        isOpen={showAiSheet}
+        onClose={() => setShowAiSheet(false)}
+        bookId={book.id}
+        bookTitle={book.title}
+        bookAuthor={book.author}
+        sectionTitle={companionSectionTitle}
+        pageNumber={companionPageNumber}
+        sectionContent={companionContent}
+        isExtracting={isExtractingAi}
+        isChapter={companionIsChapter}
+        onOpenToc={() => setShowTocDrawer(true)}
+      />
     </div>
   );
 };

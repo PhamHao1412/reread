@@ -38,7 +38,7 @@ export async function extractTableOfContents(pdfDoc: any): Promise<TocItem[]> {
 
         result.push({
           id: `${item.title}-${pageNumber}-${result.length}`,
-          title: item.title?.trim() || 'Chương',
+          title: item.title?.trim() || 'Chapter',
           pageNumber,
           level,
         });

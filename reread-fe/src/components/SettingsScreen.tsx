@@ -19,10 +19,10 @@ export const SettingsScreen: React.FC = () => {
     <div className="px-5 py-5 select-none space-y-6">
       <div>
         <h2 className="text-xl font-black tracking-tight text-[var(--app-text)]">
-          Cài đặt
+          Settings
         </h2>
         <p className="text-xs text-[var(--app-muted)] mt-0.5">
-          Tùy chỉnh tài khoản và cấu hình đọc sách di động
+          Account preferences and mobile reading setup
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export const SettingsScreen: React.FC = () => {
                   {user.username}
                 </h3>
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
-                  Đã đồng bộ
+                  Synced
                 </span>
               </div>
               <p className="text-xs text-[var(--app-muted)] mt-0.5 truncate">{user.email}</p>
@@ -51,7 +51,7 @@ export const SettingsScreen: React.FC = () => {
       {/* Theme Settings */}
       <div className="space-y-3">
         <label className="block text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
-          Giao diện ứng dụng
+          App Theme
         </label>
         <div className="grid grid-cols-2 gap-2.5">
           {themes.map((t) => {
@@ -76,7 +76,7 @@ export const SettingsScreen: React.FC = () => {
       {/* Default Reading Mode */}
       <div className="space-y-3">
         <label className="block text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
-          Chế độ đọc mặc định
+          Default Reading Mode
         </label>
         <div className="grid grid-cols-2 gap-2.5">
           <button
@@ -88,7 +88,7 @@ export const SettingsScreen: React.FC = () => {
             }`}
           >
             <BookOpen className="h-4 w-4" />
-            <span>Xem PDF gốc</span>
+            <span>Original PDF</span>
           </button>
           <button
             onClick={() => setReadingMode('readthrough')}
@@ -107,7 +107,7 @@ export const SettingsScreen: React.FC = () => {
       {/* System & Database Connection */}
       <div className="space-y-3">
         <label className="block text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">
-          Hệ thống & Cơ sở dữ liệu
+          System & Storage
         </label>
         <div className="p-3.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2 text-xs">
           <div className="flex justify-between items-center text-[var(--app-muted)]">
@@ -115,7 +115,7 @@ export const SettingsScreen: React.FC = () => {
             <span className="text-[var(--app-text)] font-mono font-bold">readful (PostgreSQL)</span>
           </div>
           <div className="flex justify-between items-center text-[var(--app-muted)]">
-            <span>Nền tảng</span>
+            <span>Platform</span>
             <span className="text-[var(--app-accent)] font-bold">Reread Mobile Companion</span>
           </div>
         </div>
@@ -128,7 +128,7 @@ export const SettingsScreen: React.FC = () => {
           className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm hover:bg-red-500/20 transition-all active:scale-98"
         >
           <LogOut className="h-4.5 w-4.5" />
-          <span>Đăng xuất tài khoản</span>
+          <span>Sign Out</span>
         </button>
       </div>
     </div>

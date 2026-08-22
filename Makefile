@@ -16,8 +16,8 @@ help:
 
 # Mở Cloudflare Tunnel cho điện thoại truy cập
 tunnel:
-	@echo "🌐 Đang khởi tạo Cloudflare Tunnel cho http://localhost:5173..."
-	cloudflared tunnel --url http://localhost:5173
+	@echo "🌐 Đang khởi tạo Cloudflare Tunnel cho http://localhost:5174..."
+	cloudflared tunnel --url http://localhost:5174
 
 # Chạy cả Backend và Frontend song song
 dev:

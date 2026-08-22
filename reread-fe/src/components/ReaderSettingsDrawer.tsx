@@ -64,8 +64,8 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
   ];
 
   const fontFamilies: { id: FontFamily; label: string }[] = [
-    { id: 'serif', label: 'Serif (Sách)' },
-    { id: 'sans', label: 'Sans (Hiện đại)' },
+    { id: 'serif', label: 'Serif (Book)' },
+    { id: 'sans', label: 'Sans (Modern)' },
     { id: 'mono', label: 'Monospace' },
   ];
 
@@ -90,7 +90,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-base font-extrabold text-[var(--app-text)] flex items-center">
             <Type className="h-4.5 w-4.5 mr-2 text-[var(--app-accent)]" />
-            Tùy chỉnh đọc sách
+            Reader Settings
           </h3>
           <button
             onClick={onClose}
@@ -103,9 +103,9 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 1. Page Scrubber Slider */}
         <div className="mb-6 p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
           <div className="flex justify-between text-xs font-bold text-[var(--app-text)] mb-2">
-            <span>Tua trang nhanh</span>
+            <span>Jump to page</span>
             <span className="text-[var(--app-accent)] font-extrabold">
-              Trang {currentPage} / {totalPages}
+              Page {currentPage} of {totalPages}
             </span>
           </div>
           <input
@@ -121,7 +121,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 2. Reading Mode Switcher */}
         <div className="mb-6">
           <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
-            Chế độ đọc
+            Reading Mode
           </label>
           <div className="grid grid-cols-2 gap-2.5">
             <button
@@ -133,7 +133,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
               }`}
             >
               <BookOpen className="h-4 w-4" />
-              <span>Xem PDF gốc</span>
+              <span>Original PDF</span>
             </button>
             <button
               onClick={() => setReadingMode('readthrough')}
@@ -152,7 +152,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 3. Theme Selector */}
         <div className="mb-6">
           <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
-            Giao diện màu sắc
+            Theme
           </label>
           <div className="grid grid-cols-4 gap-2">
             {themes.map((t) => {
@@ -176,7 +176,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 4. Font Size Controls */}
         <div className="mb-6">
           <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
-            Cỡ chữ văn bản
+            Font Size
           </label>
           <div className="flex items-center justify-between p-2 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
             <button
@@ -200,7 +200,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({
         {/* 5. Font Family */}
         <div>
           <label className="block text-xs font-bold text-[var(--app-muted)] mb-2 uppercase tracking-wider">
-            Kiểu phông chữ
+            Font Family
           </label>
           <div className="grid grid-cols-3 gap-2">
             {fontFamilies.map((f) => (

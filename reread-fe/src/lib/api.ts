@@ -83,12 +83,12 @@ class ApiClient {
     if (res.status === 401) {
       this.clearTokens();
       window.dispatchEvent(new Event('auth:unauthorized'));
-      throw new Error('Phiên đăng nhập đã hết hạn');
+      throw new Error('Session expired');
     }
 
     const data = await res.json();
     if (!res.ok || (data.succeeded !== undefined && !data.succeeded)) {
-      throw new Error(data.message || data.error || `Yêu cầu thất bại (${res.status})`);
+      throw new Error(data.message || data.error || `Request failed (${res.status})`);
     }
 
     return data.data !== undefined ? data.data : data;
@@ -107,7 +107,7 @@ class ApiClient {
 
     const json = await res.json();
     if (!res.ok || !json.succeeded || !json.data?.access_token) {
-      throw new Error(json.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      throw new Error(json.message || 'Login failed. Please check your credentials.');
     }
 
     this.setTokens(json.data.access_token, json.data.refresh_token);
@@ -224,7 +224,7 @@ class ApiClient {
     }
 
     if (!fileRes || !fileRes.ok || !fileRes.body) {
-      throw new Error('Không thể tải tệp tin nội dung sách.');
+      throw new Error('Unable to download book file.');
     }
 
     // Stream download with progress tracking (1 single fast connection, 1-2s for 30MB)
@@ -317,10 +317,10 @@ class ApiClient {
       .then(async (res) => {
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || 'Không thể kết nối với dịch vụ AI Explain.');
+          throw new Error(errData.message || 'Unable to connect to AI Explain service.');
         }
         if (!res.body) {
-          throw new Error('Không nhận được luồng dữ liệu từ AI.');
+          throw new Error('No data stream received from AI.');
         }
 
         const reader = res.body.getReader();
@@ -372,6 +372,17 @@ class ApiClient {
     return this.request<any>('/api/v1/vocabularies', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async getVocabularies(bookId?: string): Promise<any[]> {
+    const endpoint = bookId ? `/api/v1/vocabularies?book_id=${bookId}` : '/api/v1/vocabularies';
+    return this.request<any[]>(endpoint).catch(() => []);
+  }
+
+  async deleteVocabulary(id: string): Promise<void> {
+    return this.request<void>(`/api/v1/vocabularies/${id}`, {
+      method: 'DELETE',
     });
   }
 

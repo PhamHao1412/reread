@@ -110,7 +110,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
         setData(result);
       } catch (err: any) {
         if (!isMounted) return;
-        setError(err.message || 'Không thể tra cứu từ này.');
+        setError(err.message || 'Unable to look up this word.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -153,7 +153,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
         setExplainState('done');
       },
       (err) => {
-        setExplainError(err.message || 'Không thể thực hiện giải thích từ AI.');
+        setExplainError(err.message || 'Unable to generate AI explanation.');
         setExplainState('error');
       },
     );
@@ -252,7 +252,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
               </h3>
               <button
                 onClick={playAudio}
-                title="Phát âm"
+                title="Pronounce"
                 className="p-1.5 rounded-full bg-[var(--app-accent)]/15 hover:bg-[var(--app-accent)]/30 text-[var(--app-accent)] transition-all active:scale-95"
               >
                 <Volume2 className="h-4.5 w-4.5" />
@@ -285,7 +285,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
             }`}
           >
             <BookOpen className="h-4 w-4" />
-            <span>Dịch nghĩa</span>
+            <span>Definition</span>
           </button>
 
           <button
@@ -307,7 +307,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10 space-y-3">
                 <Loader2 className="h-8 w-8 text-[var(--app-accent)] animate-spin" />
-                <p className="text-sm text-[var(--app-muted)] font-semibold">Đang tra từ...</p>
+                <p className="text-sm text-[var(--app-muted)] font-semibold">Looking up word...</p>
               </div>
             ) : error ? (
               <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-center space-x-2">
@@ -319,7 +319,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 {/* Vietnamese Translation Card */}
                 <div className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] shadow-xs">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--app-accent)]">
-                    Nghĩa tiếng Việt
+                    Translation
                   </span>
                   <p className="text-[18px] sm:text-[20px] font-bold text-[var(--app-text)] mt-1 leading-snug">
                     {data.translatedText}
@@ -330,7 +330,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 {data.partsOfSpeech && data.partsOfSpeech.length > 0 && (
                   <div className="space-y-2.5">
                     <span className="text-[11px] font-bold text-[var(--app-muted)] uppercase tracking-wider">
-                      Từ điển chi tiết
+                      Dictionary Details
                     </span>
                     {data.partsOfSpeech.map((pos, idx) => (
                       <div
@@ -371,17 +371,17 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                     {saved ? (
                       <>
                         <Check className="h-5 w-5" />
-                        <span>Đã lưu vào sổ từ vựng</span>
+                        <span>Saved to Notebook</span>
                       </>
                     ) : saving ? (
                       <>
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Đang lưu...</span>
+                        <span>Saving...</span>
                       </>
                     ) : (
                       <>
                         <Bookmark className="h-5 w-5" />
-                        <span>Lưu vào sổ từ vựng</span>
+                        <span>Save to Notebook</span>
                       </>
                     )}
                   </button>
@@ -400,9 +400,9 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                   <Sparkles className="h-11 w-11 text-[var(--app-accent)] animate-pulse" />
                   <div className="absolute inset-0 bg-[var(--app-accent)]/20 rounded-full blur-lg" />
                 </div>
-                <p className="text-base font-black text-[var(--app-text)]">AI đang phân tích ngữ cảnh...</p>
+                <p className="text-base font-black text-[var(--app-text)]">AI is analyzing context...</p>
                 <p className="text-[13.5px] text-[var(--app-muted)] max-w-[280px] leading-relaxed">
-                  Đang phân tích nghĩa của từ trong câu và cuốn sách này
+                  Analyzing word usage and meaning in this book sentence
                 </p>
               </div>
             ) : explainState === 'error' ? (
@@ -418,7 +418,7 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                 {contextSentence && (
                   <div className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--app-muted)]">
-                      Ngữ cảnh trong câu
+                      Sentence Context
                     </span>
                     <p className="text-[15px] sm:text-[15.5px] italic text-[var(--app-text)] mt-1.5 leading-relaxed">
                       "{contextSentence}"
@@ -432,14 +432,14 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                     <div className="flex items-center space-x-2 text-[var(--app-accent)]">
                       <Sparkles className="h-5 w-5" />
                       <span className="text-[13px] font-black uppercase tracking-wider">
-                        Phân tích chuyên sâu từ AI
+                        AI Contextual Analysis
                       </span>
                     </div>
 
                     {explainState === 'streaming' && (
                       <span className="flex items-center space-x-1.5 text-xs text-[var(--app-accent)] animate-pulse font-extrabold">
                         <span className="w-2 h-2 rounded-full bg-[var(--app-accent)]" />
-                        <span>Đang viết...</span>
+                        <span>Writing...</span>
                       </span>
                     )}
                   </div>
@@ -460,12 +460,12 @@ export const MobileTranslationSheet: React.FC<MobileTranslationSheetProps> = ({
                       {copied ? (
                         <>
                           <Check className="h-5 w-5 text-emerald-500" />
-                          <span className="text-emerald-500 font-bold">Đã sao chép</span>
+                          <span className="text-emerald-500 font-bold">Copied</span>
                         </>
                       ) : (
                         <>
                           <Copy className="h-5 w-5 text-[var(--app-muted)]" />
-                          <span>Sao chép</span>
+                          <span>Copy</span>
                         </>
                       )}
                     </button>

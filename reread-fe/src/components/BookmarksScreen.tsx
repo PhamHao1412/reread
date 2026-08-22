@@ -65,24 +65,24 @@ export const BookmarksScreen: React.FC<BookmarksScreenProps> = ({ onOpenBookAtPa
     <div className="px-5 py-6 select-none space-y-6">
       <div>
         <h2 className="text-2xl font-black tracking-tight text-[var(--app-text)]">
-          Đánh dấu trang ({bookmarks.length})
+          Bookmarks ({bookmarks.length})
         </h2>
         <p className="text-sm text-[var(--app-muted)] mt-1">
-          Các trang sách bạn đã lưu để xem lại nhanh
+          Pages you saved for quick reference
         </p>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--app-muted)] space-y-3">
           <div className="h-9 w-9 rounded-full border-2 border-[var(--app-accent)] border-t-transparent animate-spin" />
-          <p className="text-sm">Đang tải danh sách trang đã lưu...</p>
+          <p className="text-sm">Loading your bookmarks...</p>
         </div>
       ) : bookmarks.length === 0 ? (
         <div className="p-8 rounded-3xl bg-[var(--app-card)] border border-[var(--app-border)] text-center text-[var(--app-muted)] flex flex-col items-center">
           <BookmarkIcon className="h-14 w-14 text-[var(--app-muted)]/40 mb-3" />
-          <p className="text-base font-bold text-[var(--app-text)]">Chưa có trang nào được đánh dấu</p>
+          <p className="text-base font-bold text-[var(--app-text)]">No bookmarks yet</p>
           <p className="text-sm text-[var(--app-muted)] mt-1.5 max-w-[280px]">
-            Khi đang đọc sách, chạm vào biểu tượng Bookmark ở góc trên để lưu lại trang quan trọng.
+            While reading, tap the Bookmark icon in the top toolbar to save important pages.
           </p>
         </div>
       ) : (
@@ -100,14 +100,14 @@ export const BookmarksScreen: React.FC<BookmarksScreenProps> = ({ onOpenBookAtPa
                 <div className="overflow-hidden">
                   <div className="flex items-center space-x-2.5">
                     <span className="text-[13px] font-black px-2.5 py-0.5 rounded-lg bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] shrink-0">
-                      Trang {bm.page_number}
+                      Page {bm.page_number}
                     </span>
                     <span className="text-[15px] font-black text-[var(--app-text)] truncate">
-                      {bm.book?.title || 'Sách'}
+                      {bm.book?.title || 'Book'}
                     </span>
                   </div>
                   <p className="text-[13px] text-[var(--app-muted)] font-medium mt-1 truncate">
-                    {bm.title || `Trang ${bm.page_number}`}
+                    {bm.title || `Page ${bm.page_number}`}
                   </p>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export const BookmarksScreen: React.FC<BookmarksScreenProps> = ({ onOpenBookAtPa
               <div className="flex items-center space-x-1 shrink-0 ml-3">
                 <button
                   onClick={(e) => bm.book && handleDelete(bm.book.id, bm.id, e)}
-                  title="Xóa đánh dấu"
+                  title="Delete bookmark"
                   className="p-2.5 rounded-xl text-[var(--app-muted)] hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
                 >
                   <Trash2 className="h-5 w-5" />
