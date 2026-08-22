@@ -4,7 +4,12 @@ import { getCachedBlob, setCachedBlob, bookEtag } from './bookCache';
 class ApiClient {
   private accessKey = 'readthrough_access_token';
   private refreshKey = 'readthrough_refresh_token';
-  private baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+  private baseUrl = (
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    ''
+  ).replace(/\/$/, '');
+
 
   private formatUrl(endpoint: string): string {
     if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
