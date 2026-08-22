@@ -184,6 +184,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   // Streaming AbortController
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasAttemptedRef = useRef<Record<string, boolean>>({});
+  const checkedCacheKeysRef = useRef<Set<string>>(new Set());
   const prevSectionKeyRef = useRef<string>('');
   const currentSectionKey = `${bookId}:${sectionTitle}:${pageNumber}`;
 
@@ -219,6 +220,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         abortControllerRef.current = null;
       }
       prevSectionKeyRef.current = currentSectionKey;
+      checkedCacheKeysRef.current.clear();
 
       // Fast synchronous local cache restoration (0ms delay, zero flicker)
       const localLoaded: Record<string, string> = {};
@@ -227,6 +229,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           const cached = localStorage.getItem(`reread_ai_${bookId}_${sectionTitle || `p_${pageNumber}`}_${act}`);
           if (cached) {
             localLoaded[act] = cached;
+            checkedCacheKeysRef.current.add(`${bookId}:${sectionTitle || pageNumber}:${act}`);
           }
         } catch {
           // ignore
@@ -245,6 +248,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       userScrolledUpRef.current = false;
     }
   }, [currentSectionKey, bookId, sectionTitle, pageNumber]);
+
 
 
   const handleCancelStream = useCallback(() => {
@@ -442,6 +446,10 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   const checkAndLoadCache = useCallback(async (action: 'summary' | 'explain' | 'quiz') => {
     if (!bookId || !sectionContent || !sectionContent.trim()) return;
 
+    const cacheKey = `${bookId}:${sectionTitle || pageNumber}:${action}`;
+    if (checkedCacheKeysRef.current.has(cacheKey)) return;
+    checkedCacheKeysRef.current.add(cacheKey);
+
     setCheckingCacheMap(prev => ({ ...prev, [action]: true }));
     try {
       const res = await api.fetchWithAuth('/api/v1/ai/companion/check-cache', {
@@ -479,10 +487,18 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   // When sheet opens, active tab changes, or section changes -> check and display existing cache immediately
   useEffect(() => {
     if (!isOpen || activeTab === 'vocab' || isExtracting) return;
-    if (sectionContent && sectionContent.trim().length > 0 && !contentMap[activeTab] && !loadingMap[activeTab] && !checkingCacheMap[activeTab]) {
+    const cacheKey = `${bookId}:${sectionTitle || pageNumber}:${activeTab}`;
+    if (
+      sectionContent &&
+      sectionContent.trim().length > 0 &&
+      !contentMap[activeTab] &&
+      !loadingMap[activeTab] &&
+      !checkedCacheKeysRef.current.has(cacheKey)
+    ) {
       checkAndLoadCache(activeTab);
     }
-  }, [isOpen, activeTab, sectionContent, contentMap, loadingMap, checkingCacheMap, isExtracting, checkAndLoadCache]);
+  }, [isOpen, activeTab, sectionContent, contentMap, loadingMap, isExtracting, checkAndLoadCache, bookId, sectionTitle, pageNumber]);
+
 
 
 
