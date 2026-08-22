@@ -150,12 +150,15 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   const [activeTab, setActiveTab] = useState<'summary' | 'explain' | 'quiz' | 'vocab'>('summary');
   const [contentMap, setContentMap] = useState<Record<string, string>>({});
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
+  const [checkingCacheMap, setCheckingCacheMap] = useState<Record<string, boolean>>({});
   const [errorMap, setErrorMap] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<boolean>(false);
 
   const currentContent = contentMap[activeTab] || '';
   const currentLoading = !!loadingMap[activeTab];
+  const currentCheckingCache = !!checkingCacheMap[activeTab];
   const currentError = errorMap[activeTab] || '';
+
 
   // Vocabulary
   const [bookVocab, setBookVocab] = useState<any[]>([]);
@@ -204,7 +207,11 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
     }
   }, [isOpen, fetchBookVocab]);
 
-  // Reset states when switching sections
+  const getLocalCompanionKey = useCallback((act: string) => {
+    return `reread_ai_${bookId}_${sectionTitle || `p_${pageNumber}`}_${act}`;
+  }, [bookId, sectionTitle, pageNumber]);
+
+  // Reset or restore cached states when switching sections
   useEffect(() => {
     if (prevSectionKeyRef.current !== currentSectionKey) {
       if (abortControllerRef.current) {
@@ -212,8 +219,23 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         abortControllerRef.current = null;
       }
       prevSectionKeyRef.current = currentSectionKey;
-      setContentMap({});
+
+      // Fast synchronous local cache restoration (0ms delay, zero flicker)
+      const localLoaded: Record<string, string> = {};
+      for (const act of ['summary', 'explain', 'quiz'] as const) {
+        try {
+          const cached = localStorage.getItem(`reread_ai_${bookId}_${sectionTitle || `p_${pageNumber}`}_${act}`);
+          if (cached) {
+            localLoaded[act] = cached;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setContentMap(localLoaded);
       setLoadingMap({});
+      setCheckingCacheMap({});
       setErrorMap({});
       setUserAnswers({});
       setRevealedExplanations({});
@@ -222,7 +244,8 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       hasAttemptedRef.current = {};
       userScrolledUpRef.current = false;
     }
-  }, [currentSectionKey]);
+  }, [currentSectionKey, bookId, sectionTitle, pageNumber]);
+
 
   const handleCancelStream = useCallback(() => {
     if (abortControllerRef.current) {
@@ -386,6 +409,12 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         throw new Error('AI returned an empty response. Please check your network connection and try again.');
       }
 
+      try {
+        localStorage.setItem(getLocalCompanionKey(action), finalText);
+      } catch {
+        // ignore
+      }
+
       setContentMap(prev => ({ ...prev, [action]: finalText }));
 
       if (isCached && scrollContainerRef.current) {
@@ -407,12 +436,13 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       }
       setLoadingMap(prev => ({ ...prev, [action]: false }));
     }
-  }, [bookId, sectionTitle, sectionContent, bookTitle, bookAuthor, pageNumber, isChapter, scrollToBottom]);
+  }, [bookId, sectionTitle, sectionContent, bookTitle, bookAuthor, pageNumber, isChapter, scrollToBottom, getLocalCompanionKey]);
 
   // Silently check and load cached content from database
   const checkAndLoadCache = useCallback(async (action: 'summary' | 'explain' | 'quiz') => {
     if (!bookId || !sectionContent || !sectionContent.trim()) return;
 
+    setCheckingCacheMap(prev => ({ ...prev, [action]: true }));
     try {
       const res = await api.fetchWithAuth('/api/v1/ai/companion/check-cache', {
         method: 'POST',
@@ -428,6 +458,11 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       if (res.ok) {
         const json = await res.json();
         if (json?.data?.has_cache && json?.data?.content) {
+          try {
+            localStorage.setItem(getLocalCompanionKey(action), json.data.content);
+          } catch {
+            // ignore
+          }
           setContentMap(prev => {
             if (prev[action]) return prev;
             return { ...prev, [action]: json.data.content };
@@ -436,16 +471,19 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       }
     } catch {
       // ignore cache check errors
+    } finally {
+      setCheckingCacheMap(prev => ({ ...prev, [action]: false }));
     }
-  }, [bookId, sectionTitle, pageNumber, sectionContent]);
+  }, [bookId, sectionTitle, pageNumber, sectionContent, getLocalCompanionKey]);
 
   // When sheet opens, active tab changes, or section changes -> check and display existing cache immediately
   useEffect(() => {
     if (!isOpen || activeTab === 'vocab' || isExtracting) return;
-    if (sectionContent && sectionContent.trim().length > 0 && !contentMap[activeTab] && !loadingMap[activeTab]) {
+    if (sectionContent && sectionContent.trim().length > 0 && !contentMap[activeTab] && !loadingMap[activeTab] && !checkingCacheMap[activeTab]) {
       checkAndLoadCache(activeTab);
     }
-  }, [isOpen, activeTab, sectionContent, contentMap, loadingMap, isExtracting, checkAndLoadCache]);
+  }, [isOpen, activeTab, sectionContent, contentMap, loadingMap, checkingCacheMap, isExtracting, checkAndLoadCache]);
+
 
 
 
@@ -968,7 +1006,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
             )}
 
             {/* 3. Empty text fallback */}
-            {!isExtracting && !sectionContent && !currentLoading && (
+            {!isExtracting && !sectionContent && !currentLoading && !currentCheckingCache && (
               <div className="py-12 text-center text-[var(--app-muted)] space-y-3">
                 <Compass className="w-8 h-8 mx-auto opacity-40" />
                 <p className="text-xs font-semibold">No text selected for analysis.</p>
@@ -987,8 +1025,26 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
               </div>
             )}
 
-            {/* 4. Ready to Generate / Cancelled state (Section text is ready, but no content generated) */}
-            {!isExtracting && !currentContent && !currentLoading && !currentError && sectionContent && (
+            {/* 4. Checking Cache Loading Skeleton (Prevents flashing 'Generate' button for 0.3s) */}
+            {!isExtracting && !currentContent && !currentLoading && currentCheckingCache && (
+              <div className="py-8 px-2 space-y-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)]/60" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-[var(--app-card)] rounded-lg w-1/3 border border-[var(--app-border)]/60" />
+                    <div className="h-3 bg-[var(--app-card)] rounded-lg w-1/2 border border-[var(--app-border)]/60" />
+                  </div>
+                </div>
+                <div className="space-y-2.5 pt-2">
+                  <div className="h-4 bg-[var(--app-card)] rounded-xl w-full border border-[var(--app-border)]/60" />
+                  <div className="h-4 bg-[var(--app-card)] rounded-xl w-5/6 border border-[var(--app-border)]/60" />
+                  <div className="h-4 bg-[var(--app-card)] rounded-xl w-4/6 border border-[var(--app-border)]/60" />
+                </div>
+              </div>
+            )}
+
+            {/* 5. Ready to Generate state (Only shown AFTER cache check confirms NO cache exists) */}
+            {!isExtracting && !currentContent && !currentLoading && !currentError && !currentCheckingCache && sectionContent && (
               <div className="py-14 px-4 flex flex-col items-center justify-center text-center space-y-4 animate-fadeIn">
                 <div className="p-4 rounded-3xl bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/30 text-[var(--app-accent)] shadow-sm">
                   {activeTab === 'summary' ? (
@@ -999,6 +1055,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                     <HelpCircle className="w-8 h-8" />
                   )}
                 </div>
+
 
                 <div className="max-w-[280px]">
                   <h4 className="text-base font-extrabold text-[var(--app-text)]">
