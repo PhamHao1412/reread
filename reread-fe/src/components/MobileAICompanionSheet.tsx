@@ -283,7 +283,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   };
 
   // Streaming action fetcher
-  const streamAction = useCallback(async (action: 'summary' | 'explain' | 'quiz') => {
+  const streamAction = useCallback(async (action: 'summary' | 'explain' | 'quiz', force: boolean = false) => {
     if (!sectionContent || !sectionContent.trim()) {
       return;
     }
@@ -300,6 +300,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
     setThinkingElapsed(0);
     userScrolledUpRef.current = false;
     hasAttemptedRef.current[action] = true;
+
+    if (force) {
+      try {
+        localStorage.removeItem(getLocalCompanionKey(action));
+      } catch {
+        // ignore
+      }
+    }
 
     const streamStartTime = Date.now();
     let firstTokenReceived = false;
@@ -325,8 +333,10 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           book_author: bookAuthor || 'Author',
           page_number: pageNumber,
           is_chapter: isChapter || false,
+          force: force,
         }),
       });
+
 
       if (!res.ok) {
         let errMsg = 'AI Companion service is temporarily unavailable.';
@@ -663,12 +673,12 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         const body = trimmed.replace(/^#{1,3}\s*TL;?DR[^\n]*\n*/i, '').replace(/^TL;?DR\s*[:\n]*/i, '').trim();
         if (body) {
           return (
-            <div key={bIdx} className="my-3 p-3.5 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 text-[var(--app-text)]">
-              <div className="flex items-center gap-1.5 text-xs font-extrabold text-[var(--app-accent)] uppercase tracking-wider mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
+            <div key={bIdx} className="my-3 p-4 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 text-[var(--app-text)]">
+              <div className="flex items-center gap-1.5 text-[13px] font-black text-[var(--app-accent)] uppercase tracking-wider mb-2">
+                <Sparkles className="w-4 h-4" />
                 <span>Quick Summary (TL;DR)</span>
               </div>
-              <p className="text-[14.5px] sm:text-base leading-[1.65] font-medium text-[var(--app-text)]">
+              <p className="text-[16px] sm:text-[17px] leading-[1.75] font-medium text-[var(--app-text)]">
                 {renderInline(body, trimmed)}
               </p>
             </div>
@@ -676,8 +686,8 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         }
 
         return (
-          <div key={bIdx} className="inline-flex items-center gap-1.5 my-2 px-3 py-1.5 rounded-xl bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/25 text-[var(--app-accent)] text-[11px] font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div key={bIdx} className="inline-flex items-center gap-1.5 my-2 px-3.5 py-1.5 rounded-xl bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/25 text-[var(--app-accent)] text-xs font-black uppercase tracking-wider">
+            <Sparkles className="w-4 h-4" />
             <span>Quick Summary (TL;DR)</span>
           </div>
         );
@@ -688,8 +698,8 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         const title = trimmed.replace(/^#{1,3}\s*/, '').split('\n')[0].trim();
         return (
           <div key={bIdx} className="flex items-center gap-2 mt-6 mb-3 text-[var(--app-accent)] font-bold">
-            <Lightbulb className="w-4.5 h-4.5 shrink-0" />
-            <span className="uppercase tracking-wider text-xs sm:text-sm font-black">{title}</span>
+            <Lightbulb className="w-5 h-5 shrink-0" />
+            <span className="uppercase tracking-wider text-[14.5px] sm:text-base font-black">{title}</span>
           </div>
         );
       }
@@ -702,9 +712,9 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           .join('\n')
           .trim();
         return (
-          <div key={bIdx} className="my-3.5 p-4 rounded-2xl bg-[var(--app-card)] border-l-4 border-[var(--app-accent)] flex items-start gap-3">
-            <Quote className="w-4.5 h-4.5 text-[var(--app-accent)] shrink-0 mt-0.5 opacity-80" />
-            <div className="text-[14px] sm:text-base text-[var(--app-text)] italic leading-[1.65]">
+          <div key={bIdx} className="my-4 p-4.5 rounded-2xl bg-[var(--app-card)] border-l-4 border-[var(--app-accent)] flex items-start gap-3">
+            <Quote className="w-5 h-5 text-[var(--app-accent)] shrink-0 mt-0.5 opacity-80" />
+            <div className="text-[15.5px] sm:text-[16.5px] text-[var(--app-text)] italic leading-[1.75]">
               {renderInline(quoteContent, quoteContent)}
             </div>
           </div>
@@ -717,22 +727,22 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         const level = headingMatch[1].length;
         const headingText = headingMatch[2].trim();
         if (level === 1) {
-          return <h2 key={bIdx} className="text-lg font-extrabold text-[var(--app-text)] mt-5 mb-2.5">{renderInline(headingText, headingText)}</h2>;
+          return <h2 key={bIdx} className="text-[20px] sm:text-[22px] font-black text-[var(--app-text)] mt-6 mb-3">{renderInline(headingText, headingText)}</h2>;
         }
         if (level === 2) {
-          return <h3 key={bIdx} className="text-base font-bold text-[var(--app-text)] mt-4 mb-2 flex items-center gap-2">{renderInline(headingText, headingText)}</h3>;
+          return <h3 key={bIdx} className="text-[17.5px] sm:text-[19px] font-bold text-[var(--app-text)] mt-5 mb-2.5 flex items-center gap-2">{renderInline(headingText, headingText)}</h3>;
         }
-        return <h4 key={bIdx} className="text-sm font-bold text-[var(--app-muted)] uppercase tracking-wider mt-3.5 mb-1.5">{renderInline(headingText, headingText)}</h4>;
+        return <h4 key={bIdx} className="text-[15px] sm:text-base font-bold text-[var(--app-muted)] uppercase tracking-wider mt-4 mb-2">{renderInline(headingText, headingText)}</h4>;
       }
 
       // 5. Unordered List Items
       if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
         const lines = trimmed.split('\n').filter(l => l.trim().startsWith('- ') || l.trim().startsWith('* '));
         return (
-          <ul key={bIdx} className="my-2.5 space-y-2.5 pl-1">
+          <ul key={bIdx} className="my-3 space-y-3 pl-1">
             {lines.map((line, lIdx) => (
-              <li key={lIdx} className="flex items-start gap-2.5 text-[14.5px] sm:text-base leading-[1.65] text-[var(--app-text)]">
-                <span className="w-2 h-2 rounded-full bg-[var(--app-accent)] mt-2 shrink-0" />
+              <li key={lIdx} className="flex items-start gap-3 text-[16px] sm:text-[17px] leading-[1.75] text-[var(--app-text)]">
+                <span className="w-2 h-2 rounded-full bg-[var(--app-accent)] mt-2.5 shrink-0" />
                 <span className="flex-1">{renderInline(line.replace(/^[-*]\s+/, ''), line)}</span>
               </li>
             ))}
@@ -744,14 +754,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       if (/^\d+\.\s+/.test(trimmed)) {
         const lines = trimmed.split('\n').filter(l => /^\d+\.\s+/.test(l.trim()));
         return (
-          <ol key={bIdx} className="my-2.5 space-y-2.5 pl-1">
+          <ol key={bIdx} className="my-3 space-y-3 pl-1">
             {lines.map((line, lIdx) => {
               const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
               const num = numMatch ? numMatch[1] : `${lIdx + 1}`;
               const text = numMatch ? numMatch[2] : line;
               return (
-                <li key={lIdx} className="flex items-start gap-2.5 text-[14.5px] sm:text-base leading-[1.65] text-[var(--app-text)]">
-                  <span className="w-5 h-5 rounded-full bg-[var(--app-card)] text-[var(--app-accent)] font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--app-border)]">
+                <li key={lIdx} className="flex items-start gap-3 text-[16px] sm:text-[17px] leading-[1.75] text-[var(--app-text)]">
+                  <span className="w-6 h-6 rounded-full bg-[var(--app-card)] text-[var(--app-accent)] font-black text-[12.5px] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--app-border)]">
                     {num}
                   </span>
                   <span className="flex-1">{renderInline(text, line)}</span>
@@ -764,12 +774,13 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
 
       // 7. Regular Paragraph
       return (
-        <p key={bIdx} className="my-2.5 text-[14.5px] sm:text-base leading-[1.65] text-[var(--app-text)] font-normal">
+        <p key={bIdx} className="my-3 text-[16px] sm:text-[17px] leading-[1.75] text-[var(--app-text)] font-normal">
           {renderInline(trimmed, trimmed)}
         </p>
       );
     });
   };
+
 
 
 
@@ -840,40 +851,40 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       </div>
 
       {/* 2. Tab Navigation Pills */}
-      <div className="w-full px-3 py-2 bg-[var(--app-surface)]/80 border-b border-[var(--app-border)] shrink-0 grid grid-cols-4 gap-1.5 z-10">
+      <div className="w-full px-3 py-2.5 bg-[var(--app-surface)]/80 border-b border-[var(--app-border)] shrink-0 grid grid-cols-4 gap-2 z-10">
         <button
           onClick={() => setActiveTab('summary')}
-          className={`h-9 px-1 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
             activeTab === 'summary'
-              ? 'bg-[var(--app-accent)] text-white shadow-md'
+              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
           }`}
         >
-          <FileText className="w-3.5 h-3.5 shrink-0" />
+          <FileText className="w-4 h-4 shrink-0" />
           <span>Summary</span>
         </button>
 
         <button
           onClick={() => setActiveTab('explain')}
-          className={`h-9 px-1 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
             activeTab === 'explain'
-              ? 'bg-[var(--app-accent)] text-white shadow-md'
+              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
           }`}
         >
-          <Lightbulb className="w-3.5 h-3.5 shrink-0" />
+          <Lightbulb className="w-4 h-4 shrink-0" />
           <span>Explain</span>
         </button>
 
         <button
           onClick={() => setActiveTab('quiz')}
-          className={`h-9 px-1 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
             activeTab === 'quiz'
-              ? 'bg-[var(--app-accent)] text-white shadow-md'
+              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
           }`}
         >
-          <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+          <HelpCircle className="w-4 h-4 shrink-0" />
           <span>Quiz</span>
         </button>
 
@@ -882,16 +893,16 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
             setActiveTab('vocab');
             fetchBookVocab();
           }}
-          className={`h-9 px-1 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[12px] sm:text-[13px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
             activeTab === 'vocab'
-              ? 'bg-[var(--app-accent)] text-white shadow-md'
+              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
           }`}
         >
-          <Bookmark className="w-3.5 h-3.5 shrink-0" />
-          <span>Vocabulary</span>
+          <Bookmark className="w-4 h-4 shrink-0" />
+          <span>Vocab</span>
           {bookVocab.length > 0 && (
-            <span className={`text-[9px] px-1 rounded-full font-extrabold shrink-0 ${
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black shrink-0 ${
               activeTab === 'vocab' ? 'bg-white/25 text-white' : 'bg-[var(--app-surface)] text-[var(--app-accent)]'
             }`}>
               {bookVocab.length}
@@ -899,6 +910,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           )}
         </button>
       </div>
+
 
       {/* 3. Main Scrollable Body Content */}
       <div
@@ -922,19 +934,19 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
               </div>
             ) : (
               bookVocab.map(v => (
-                <div key={v.id} className="p-4 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2">
+                <div key={v.id} className="p-4.5 rounded-2xl bg-[var(--app-card)] border border-[var(--app-border)] space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-base font-extrabold text-[var(--app-text)]">{v.original_text}</h4>
+                        <h4 className="text-[17.5px] font-extrabold text-[var(--app-text)]">{v.original_text}</h4>
                         {v.part_of_speech && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--app-accent)]/15 text-[var(--app-accent)] uppercase">
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--app-accent)]/15 text-[var(--app-accent)] uppercase">
                             {v.part_of_speech}
                           </span>
                         )}
                       </div>
                       {v.ipa && (
-                        <span className="text-xs font-mono text-[var(--app-muted)]">[{v.ipa}]</span>
+                        <span className="text-[13.5px] font-mono text-[var(--app-muted)]">[{v.ipa}]</span>
                       )}
                     </div>
 
@@ -944,27 +956,28 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                         className="p-2 rounded-full text-[var(--app-muted)] hover:text-[var(--app-accent)] active:scale-95"
                         title="Pronounce"
                       >
-                        <Volume2 className="w-4 h-4" />
+                        <Volume2 className="w-4.5 h-4.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteWord(v.id)}
                         className="p-2 rounded-full text-[var(--app-muted)] hover:text-red-500 active:scale-95"
                         title="Delete word"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4.5 h-4.5" />
                       </button>
                     </div>
                   </div>
 
-                  <p className="text-sm font-bold text-[var(--app-accent)]">{v.translated_text}</p>
+                  <p className="text-[15.5px] font-bold text-[var(--app-accent)] leading-snug">{v.translated_text}</p>
 
                   {v.context_sentence && (
-                    <p className="text-xs text-[var(--app-muted)] italic border-l-2 border-[var(--app-accent)]/40 pl-2.5 py-0.5">
+                    <p className="text-[13.5px] text-[var(--app-muted)] italic border-l-2 border-[var(--app-accent)]/40 pl-2.5 py-0.5 leading-relaxed">
                       "{v.context_sentence}"
                     </p>
                   )}
                 </div>
               ))
+
             )}
           </div>
         ) : (
@@ -1162,16 +1175,16 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="w-5.5 h-5.5 rounded-full bg-[var(--app-accent)] text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                        <span className="w-6.5 h-6.5 rounded-full bg-[var(--app-accent)] text-white font-black text-[13px] flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                           {q.number}
                         </span>
-                        <h4 className="text-[15px] sm:text-base font-bold text-[var(--app-text)] leading-snug">
+                        <h4 className="text-[16.5px] sm:text-[17.5px] font-bold text-[var(--app-text)] leading-snug">
                           {renderWords(q.question, q.question)}
                         </h4>
                       </div>
 
                       {/* Quiz Options */}
-                      <div className="space-y-2.5">
+                      <div className="space-y-3">
                         {q.options.map((opt) => {
                           const isOptSelected = selected === opt.letter;
                           const isOptCorrect = opt.letter === q.correctAnswerLetter;
@@ -1192,9 +1205,9 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                             <button
                               key={opt.letter}
                               onClick={() => handleSelectQuizOption(q.id, opt.letter)}
-                              className={`w-full text-left p-3.5 rounded-2xl border flex items-center gap-3 active:scale-98 transition-all min-h-[48px] ${btnStyle}`}
+                              className={`w-full text-left p-4 rounded-2xl border flex items-center gap-3.5 active:scale-98 transition-all min-h-[52px] ${btnStyle}`}
                             >
-                              <span className={`w-6.5 h-6.5 rounded-xl font-extrabold text-[12px] flex items-center justify-center shrink-0 border ${
+                              <span className={`w-7 h-7 rounded-xl font-black text-[13.5px] flex items-center justify-center shrink-0 border ${
                                 isAnswered && isOptCorrect
                                     ? 'bg-emerald-500 text-white border-emerald-500'
                                     : isAnswered && isOptSelected && !isOptCorrect
@@ -1203,14 +1216,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
                               }`}>
                                 {opt.letter}
                               </span>
-                              <span className="text-[14px] sm:text-[15px] leading-relaxed flex-1">
+                              <span className="text-[15.5px] sm:text-[16.5px] leading-relaxed flex-1">
                                 {renderWords(opt.text, opt.text)}
                               </span>
                               {isAnswered && isOptCorrect && (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                                <CheckCircle2 className="w-5.5 h-5.5 text-emerald-400 shrink-0" />
                               )}
                               {isAnswered && isOptSelected && !isOptCorrect && (
-                                <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                                <XCircle className="w-5.5 h-5.5 text-red-400 shrink-0" />
                               )}
                             </button>
                           );
@@ -1219,21 +1232,22 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
 
                       {/* Quiz Explanation */}
                       {isAnswered && (
-                        <div className="pt-2.5 border-t border-[var(--app-border)]/60">
+                        <div className="pt-3 border-t border-[var(--app-border)]/60">
                           <button
                             onClick={() => toggleRevealExplanation(q.id)}
-                            className="text-xs sm:text-sm font-bold text-[var(--app-accent)] flex items-center gap-1 hover:underline"
+                            className="text-[13.5px] sm:text-sm font-bold text-[var(--app-accent)] flex items-center gap-1.5 hover:underline"
                           >
                             <span>{showExpl ? 'Hide explanation' : 'View explanation'}</span>
                           </button>
                           {showExpl && (
-                            <div className="mt-2 p-3.5 rounded-xl bg-[var(--app-surface)] text-[13.5px] sm:text-sm text-[var(--app-text)] leading-relaxed border border-[var(--app-border)] space-y-1">
+                            <div className="mt-2.5 p-4 rounded-xl bg-[var(--app-surface)] text-[15px] sm:text-[16px] text-[var(--app-text)] leading-relaxed border border-[var(--app-border)] space-y-1.5">
                               <p className="font-bold text-[var(--app-accent)]">Correct answer: {q.correctAnswerLetter}</p>
                               <p className="opacity-90">{renderWords(q.explanation || 'No detailed explanation provided.', q.explanation)}</p>
                             </div>
                           )}
                         </div>
                       )}
+
                     </div>
                   );
                 })}
@@ -1292,13 +1306,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
               </button>
 
               <button
-                onClick={() => streamAction(activeTab)}
+                onClick={() => streamAction(activeTab, true)}
                 disabled={currentLoading}
                 className="flex-1 py-3 px-3 rounded-xl bg-[var(--app-accent)] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Regenerate</span>
               </button>
+
             </div>
           </div>
         ) : null
