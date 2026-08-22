@@ -674,37 +674,33 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
   // Markdown block renderer
   const renderMarkdownBlocks = (markdownText: string) => {
     if (!markdownText) return null;
-    const normalized = markdownText.replace(/\r\n/g, '\n');
+    let normalized = markdownText.replace(/\r\n/g, '\n');
+    normalized = normalized.replace(/^#{1,4}\s*TL;?DR\s*\n+/gim, '### TL;DR\n');
+    normalized = normalized.replace(/^#{1,4}\s*Main\s+Takeaway\s*\n+/gim, '### Main Takeaway\n');
     const rawBlocks = normalized.split(/\n\n+/);
 
     return rawBlocks.map((block, bIdx) => {
       const trimmed = block.trim();
       if (!trimmed) return null;
 
-      // 1. TL;DR Overview Section
+      // 1. TL;DR Overview Section (Always a dedicated block card with line break)
       if (/^#{1,3}\s*TL;?DR/i.test(trimmed) || /^TL;?DR\s*[:\n]/i.test(trimmed)) {
         const body = trimmed.replace(/^#{1,3}\s*TL;?DR[^\n]*\n*/i, '').replace(/^TL;?DR\s*[:\n]*/i, '').trim();
-        if (body) {
-          return (
-            <div key={bIdx} className="my-3 p-4 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 text-[var(--app-text)]">
-              <div className="flex items-center gap-1.5 text-[13px] font-black text-[var(--app-accent)] uppercase tracking-wider mb-2">
-                <Sparkles className="w-4 h-4" />
-                <span>Quick Summary (TL;DR)</span>
-              </div>
+        return (
+          <div key={bIdx} className="my-3 p-4 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 text-[var(--app-text)]">
+            <div className="flex items-center gap-1.5 text-[13px] font-black text-[var(--app-accent)] uppercase tracking-wider mb-2">
+              <Sparkles className="w-4 h-4" />
+              <span>Quick Summary (TL;DR)</span>
+            </div>
+            {body && (
               <p className="text-[16px] sm:text-[17px] leading-[1.75] font-medium text-[var(--app-text)]">
                 {renderInline(body, trimmed)}
               </p>
-            </div>
-          );
-        }
-
-        return (
-          <div key={bIdx} className="inline-flex items-center gap-1.5 my-2 px-3.5 py-1.5 rounded-xl bg-[var(--app-accent)]/15 border border-[var(--app-accent)]/25 text-[var(--app-accent)] text-xs font-black uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" />
-            <span>Quick Summary (TL;DR)</span>
+            )}
           </div>
         );
       }
+
 
       // 2. Key Ideas / Core Concepts Header
       if (/^#{1,3}\s*(Key Ideas|Core Concepts|Key Takeaways|Ý chính|Khái niệm cốt lõi)/i.test(trimmed)) {
@@ -864,10 +860,10 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
       </div>
 
       {/* 2. Tab Navigation Pills */}
-      <div className="w-full px-3 py-2.5 bg-[var(--app-surface)]/80 border-b border-[var(--app-border)] shrink-0 grid grid-cols-4 gap-2 z-10">
+      <div className="w-full px-3 py-2.5 bg-[var(--app-surface)]/80 border-b border-[var(--app-border)] shrink-0 grid grid-cols-2 gap-2 z-10">
         <button
           onClick={() => setActiveTab('summary')}
-          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
             activeTab === 'summary'
               ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
@@ -878,35 +874,11 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('explain')}
-          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
-            activeTab === 'explain'
-              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
-              : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
-          }`}
-        >
-          <Lightbulb className="w-4 h-4 shrink-0" />
-          <span>Explain</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('quiz')}
-          className={`h-10 px-1.5 rounded-xl text-[12.5px] sm:text-[13.5px] font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
-            activeTab === 'quiz'
-              ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
-              : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
-          }`}
-        >
-          <HelpCircle className="w-4 h-4 shrink-0" />
-          <span>Quiz</span>
-        </button>
-
-        <button
           onClick={() => {
             setActiveTab('vocab');
             fetchBookVocab();
           }}
-          className={`h-10 px-1.5 rounded-xl text-[12px] sm:text-[13px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+          className={`h-10 px-1.5 rounded-xl text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
             activeTab === 'vocab'
               ? 'bg-[var(--app-accent)] text-white shadow-md font-extrabold'
               : 'text-[var(--app-muted)] hover:text-[var(--app-text)] bg-[var(--app-card)]/50'
@@ -923,6 +895,7 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
           )}
         </button>
       </div>
+
 
 
       {/* 3. Main Scrollable Body Content */}
@@ -1271,11 +1244,14 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
             {!isExtracting && (activeTab !== 'quiz' || parsedQuizQuestions.length === 0) && currentContent && (
               <div>
                 {Boolean(currentDuration && currentDuration > 0) && (
-                  <div className="mb-3.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--app-muted)] bg-[var(--app-card)] px-3 py-1 rounded-full border border-[var(--app-border)]">
-                    <Brain className="w-3.5 h-3.5 text-[var(--app-accent)]" />
-                    <span>Completed reasoning in {currentDuration}s</span>
+                  <div className="w-full flex mb-3.5">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--app-muted)] bg-[var(--app-card)] px-3 py-1 rounded-full border border-[var(--app-border)]">
+                      <Brain className="w-3.5 h-3.5 text-[var(--app-accent)]" />
+                      <span>Completed reasoning in {currentDuration}s</span>
+                    </div>
                   </div>
                 )}
+
 
                 <div className="space-y-3 text-[var(--app-text)]">
                   {renderMarkdownBlocks(currentContent)}

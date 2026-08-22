@@ -109,7 +109,7 @@ export const findSectionPageRange = (
   outline: TocItemData[],
   totalPages: number,
   currentTitle?: string,
-  maxPagesSpan = 12
+  maxPagesSpan = 20
 ): SectionRangeResult => {
   const flat = flattenOutline(outline);
   if (flat.length === 0) {
@@ -148,11 +148,9 @@ export const findSectionPageRange = (
       const nextTargetPage = getItemPage(nextItem);
 
       if (nextTargetPage !== null) {
-        if (nextTargetPage > startPage) {
-          endPage = Math.max(startPage, nextTargetPage - 1);
-        } else if (nextTargetPage === startPage) {
-          // Next subsection is on the very same page
-          endPage = startPage;
+        if (nextTargetPage >= startPage) {
+          // Include nextTargetPage so precision intra-page trimming can cut at the next section heading
+          endPage = nextTargetPage;
         }
       }
     }
@@ -165,14 +163,15 @@ export const findSectionPageRange = (
 
     if (subsequent.length > 0) {
       nextSectionTitle = subsequent[0].item.title;
-      endPage = Math.max(startPage, subsequent[0].page - 1);
+      endPage = Math.max(startPage, subsequent[0].page);
     }
   }
 
-  // Cap span to avoid huge context payloads
+  // Cap span to avoid huge context payloads (supports comprehensive sections up to 20 pages)
   const maxEnd = Math.min(totalPages, startPage + maxPagesSpan - 1);
   endPage = Math.min(endPage, maxEnd);
   if (endPage < startPage) endPage = startPage;
+
 
   return {
     startPage,
@@ -293,8 +292,9 @@ export const extractPdfSectionText = async (
   endPage: number,
   targetTitle?: string,
   nextSectionTitle?: string,
-  maxCharLimit = 30000
+  maxCharLimit = 50000
 ): Promise<string> => {
+
   if (!pdfDoc) return '';
   const start = Math.max(1, startPage);
   const end = Math.min(pdfDoc.numPages || 1, Math.max(start, endPage));

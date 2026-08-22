@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 	"readthrough-be/internal/handler/rest/dto"
 	"readthrough-be/internal/model"
@@ -105,6 +106,21 @@ func (h *BookmarkHandler) Delete(c *gin.Context) {
 	}
 	userID := userIDVal.(uuid.UUID)
 
+	bookIDStr := c.Param("id")
+	pageStr := c.Query("page")
+	if pageStr != "" && bookIDStr != "" {
+		bookID, err := uuid.Parse(bookIDStr)
+		if err == nil {
+			var page int
+			_, _ = fmt.Sscanf(pageStr, "%d", &page)
+			if page > 0 {
+				_ = h.bookmarkSvc.DeleteBookmarkByPage(c.Request.Context(), userID, bookID, page)
+				c.JSON(http.StatusOK, dto.ResponseOK(gin.H{"deleted": true}).WithMessage("Bookmark removed"))
+				return
+			}
+		}
+	}
+
 	bookmarkIDStr := c.Param("bookmark_id")
 	if bookmarkIDStr == "" {
 		bookmarkIDStr = c.Param("id")
@@ -112,6 +128,19 @@ func (h *BookmarkHandler) Delete(c *gin.Context) {
 
 	bookmarkID, err := uuid.Parse(bookmarkIDStr)
 	if err != nil {
+		// If not a valid UUID, check if page number was passed as param
+		if bookIDStr != "" {
+			bookID, bErr := uuid.Parse(bookIDStr)
+			if bErr == nil {
+				var page int
+				_, _ = fmt.Sscanf(bookmarkIDStr, "%d", &page)
+				if page > 0 {
+					_ = h.bookmarkSvc.DeleteBookmarkByPage(c.Request.Context(), userID, bookID, page)
+					c.JSON(http.StatusOK, dto.ResponseOK(gin.H{"deleted": true}).WithMessage("Bookmark removed"))
+					return
+				}
+			}
+		}
 		c.JSON(http.StatusBadRequest, dto.ResponseBadRequest(err))
 		return
 	}
