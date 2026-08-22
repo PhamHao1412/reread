@@ -409,7 +409,44 @@ export const MobileAICompanionSheet: React.FC<MobileAICompanionSheetProps> = ({
     }
   }, [bookId, sectionTitle, sectionContent, bookTitle, bookAuthor, pageNumber, isChapter, scrollToBottom]);
 
-  // On-demand streaming: user clicks the generate button to start analysis
+  // Silently check and load cached content from database
+  const checkAndLoadCache = useCallback(async (action: 'summary' | 'explain' | 'quiz') => {
+    if (!bookId || !sectionContent || !sectionContent.trim()) return;
+
+    try {
+      const res = await api.fetchWithAuth('/api/v1/ai/companion/check-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          book_id: bookId,
+          section_title: sectionTitle || `Page ${pageNumber}`,
+          content: sectionContent,
+          action,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data?.has_cache && json?.data?.content) {
+          setContentMap(prev => {
+            if (prev[action]) return prev;
+            return { ...prev, [action]: json.data.content };
+          });
+        }
+      }
+    } catch {
+      // ignore cache check errors
+    }
+  }, [bookId, sectionTitle, pageNumber, sectionContent]);
+
+  // When sheet opens, active tab changes, or section changes -> check and display existing cache immediately
+  useEffect(() => {
+    if (!isOpen || activeTab === 'vocab' || isExtracting) return;
+    if (sectionContent && sectionContent.trim().length > 0 && !contentMap[activeTab] && !loadingMap[activeTab]) {
+      checkAndLoadCache(activeTab);
+    }
+  }, [isOpen, activeTab, sectionContent, contentMap, loadingMap, isExtracting, checkAndLoadCache]);
+
 
 
   const handleCopy = () => {
